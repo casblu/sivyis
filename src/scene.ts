@@ -18,6 +18,7 @@ import {
 } from './artists.ts'
 import { GENRE_NEBULA_PHOTO } from './nebulaPhotos.ts'
 import { LightningFX } from './lightning.ts'
+import { stageTexture } from './stellarStages.ts'
 import { buildSkeleton, maskBank, puffTexture, dustTexture, rng, type SkelPoint } from './nebulaShape.ts'
 
 
@@ -90,6 +91,9 @@ export type StarHandle = {
   baseScale: number
   /** Extra wide warm halo for memorial stars */
   memorialHalo?: THREE.Mesh
+  /** Stage sprite: planetary nebula / supernova remnant / protostar cocoon+jets */
+  stageFx?: THREE.Sprite
+  stageFxScale?: number
   /** 0..1 nebula-proximity visibility (stars hidden from far away) */
   vis: number
   genreCenter: THREE.Vector3
@@ -737,6 +741,12 @@ export class GalaxyScene {
       }
       shellMat.opacity *= vis
       glowMat.opacity *= vis
+      if (star.stageFx) {
+        const breathe = 0.94 + Math.sin(t * 0.9 + star.pulse) * 0.06
+        star.stageFx.scale.setScalar(star.stageFxScale! * (selected ? 1.15 : 1) * breathe)
+        star.stageFx.material.opacity = vis * (1 - close * 0.35) * (playing ? 0.9 + this.playingAmp * 0.3 : 1)
+        if (star.artist.stage === 'dead') coreMat.emissiveIntensity = 0.9
+      }
     }
 
     this.updateStarMist(t, this.lastDt)
@@ -1166,11 +1176,13 @@ export class GalaxyScene {
       group.position.set(...artist.position)
       group.userData.artistId = artist.id
 
-      const isMemorial = !!artist.memorial
-      // Memorial stars: warm gold-white tint and larger core.
+      const isMemorial = false // dead stars now render as nebula remnants (stage fx) instead of gold halos
+      const stage = artist.stage
       const color = new THREE.Color(artist.color)
-      if (isMemorial) color.lerp(new THREE.Color(MEMORIAL_GOLD), 0.65)
-      const coreScale = artist.size * 1.55 * (isMemorial ? 1.45 : 1)
+      if (stage === 'dead') color.set(0xdde8ff) // faint hot white dwarf
+      if (stage === 'protostar') color.lerp(new THREE.Color(0xffd2a0), 0.7)
+      const pickScale = artist.size * 1.55
+      const coreScale = pickScale * (stage === 'dead' ? 0.22 : stage === 'protostar' ? 0.45 : 1)
       const core = new THREE.Mesh(
         this.sharedCoreGeo,
         // Soft hot core: bright centre, fully transparent rim (no hard edge at any distance).
@@ -1206,7 +1218,7 @@ export class GalaxyScene {
           colorWrite: false,
         }),
       )
-      pickProxy.scale.setScalar(coreScale * STAR_PICK_RADIUS_MUL)
+      pickProxy.scale.setScalar(pickScale * STAR_PICK_RADIUS_MUL)
       pickProxy.userData.artistId = artist.id
 
       let memorialHalo: THREE.Mesh | undefined
@@ -1218,6 +1230,22 @@ export class GalaxyScene {
         memorialHalo.scale.setScalar(coreScale * 7)
         memorialHalo.userData.artistId = artist.id
         group.add(memorialHalo)
+      }
+
+      let stageFx: THREE.Sprite | undefined
+      let stageFxScale = 0
+      if (stage !== 'star') {
+        const kind = stage === 'protostar' ? 'protostar' : artist.remnant === 'supernova' ? 'remnant' : 'nebula'
+        stageFx = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: stageTexture(kind), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+          rotation: hash(artist.name.length, 9.1) * Math.PI * 2,
+        }))
+        stageFxScale = pickScale * (kind === 'remnant' ? 4.2 : kind === 'nebula' ? 3.6 : 3.2)
+        stageFx.scale.setScalar(stageFxScale)
+        stageFx.userData.artistId = artist.id
+        shell.visible = false
+        glow.visible = stage === 'protostar'
+        group.add(stageFx)
       }
 
       group.add(glow)
@@ -1236,6 +1264,8 @@ export class GalaxyScene {
         pulse: hash(artist.name.length, 4.2) * Math.PI * 2,
         baseScale: coreScale,
         memorialHalo,
+        stageFx,
+        stageFxScale,
         vis: 0,
         genreCenter: new THREE.Vector3(...GENRE_BY_ID[artist.genreId].center),
         genreRadius: GENRE_BY_ID[artist.genreId].radius,

@@ -404,6 +404,7 @@ export class UI {
     must(this.panel, '#panel-body').innerHTML = `
       ${heroHtml(artist)}
       ${alsoInLine(artist)}
+      ${artist.isNew ? `<p class="memorial-line">✦ New star · just joined Cosmoly (demo)</p>` : ''}
       ${artist.memorial ? `<p class="memorial-line">✦ In memoriam · ${memorialYears(artist.memorial)}${artist.memorial.place ? ' · ' + escapeHtml(artist.memorial.place) : ''}</p>` : ''}
       ${openBadges(artist)}
       <p class="bio">${escapeHtml(artist.bio)}</p>

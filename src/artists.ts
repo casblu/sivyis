@@ -1,5 +1,5 @@
 import openCatalog from './openCatalog.json'
-import { MEMORIALS, type Memorial } from './memorials.ts'
+import { MEMORIALS, SUPERNOVA_REMNANTS, type Memorial } from './memorials.ts'
 import {
   GENRE_BALL_RADIUS,
   GENRE_CLUSTER_RADIUS,
@@ -130,7 +130,19 @@ export type Artist = {
   open?: OpenInfo
   /** Set when the artist has died — renders as a memorial star (see memorials.ts) */
   memorial?: Memorial
+  /** Life-cycle stage: protostar = newly signed-up artist, star = active, dead = deceased. */
+  stage: ArtistStage
+  deceased: boolean
+  deathYear?: number
+  /** Newly joined artist (demo flag until accounts exist) */
+  isNew: boolean
+  /** Dead-star look: planetary nebula (default) or supernova remnant (very influential) */
+  remnant?: 'nebula' | 'supernova'
 }
+export type ArtistStage = 'protostar' | 'star' | 'dead'
+
+/** Demo "just signed up" artists (open catalog indies) — render as protostars. */
+export const DEMO_NEW_ARTIST_IDS = new Set<string>()
 
 const PENT = [0, 3, 5, 7, 10]
 const MAJOR = [0, 2, 4, 5, 7, 9, 11]
@@ -1559,6 +1571,11 @@ function placeAtSubgenre(
     audio: { ...sub.audio },
     open: seed.open,
     memorial: MEMORIALS[seed.id],
+    deceased: !!MEMORIALS[seed.id],
+    deathYear: MEMORIALS[seed.id] ? Number(MEMORIALS[seed.id].diedOn.slice(0, 4)) : undefined,
+    isNew: DEMO_NEW_ARTIST_IDS.has(seed.id),
+    stage: MEMORIALS[seed.id] ? 'dead' : DEMO_NEW_ARTIST_IDS.has(seed.id) ? 'protostar' : 'star',
+    remnant: MEMORIALS[seed.id] ? (SUPERNOVA_REMNANTS.has(seed.id) ? 'supernova' : 'nebula') : undefined,
   }
 }
 
@@ -1609,6 +1626,7 @@ export const OPEN_CATALOG_STATS = (openCatalog as unknown as { stats: Record<str
 function openSeeds(): ArtistSeed[] {
   const taken = new Set(seeds.map((s) => s.name.toLowerCase().replace(/[^a-z0-9]+/g, '')))
   const out: ArtistSeed[] = []
+  let newCount = 0
   for (const a of (openCatalog as unknown as { artists: OpenCatalogArtist[] }).artists) {
     if (!SUBGENRE_BY_ID[a.subgenreId]) continue
     if (taken.has(a.name.toLowerCase().replace(/[^a-z0-9]+/g, ''))) continue // dedupe vs built-in sample artists
@@ -1623,6 +1641,10 @@ function openSeeds(): ArtistSeed[] {
       size: 0.75,
       open: { sources: a.sources, image: a.image, links: a.links, pay: a.pay, genreTags: a.genreTags },
     })
+    // Demo: the first few indie catalog artists in different genres act as "just signed up" protostars.
+    if (newCount < 5 && ![...DEMO_NEW_ARTIST_IDS].some((id) => out.find((o) => o.id === id)?.genreId === a.genreId)) {
+      DEMO_NEW_ARTIST_IDS.add(a.id); newCount++
+    }
   }
   return out
 }
