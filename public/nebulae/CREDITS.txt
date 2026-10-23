@@ -1,0 +1,17 @@
+Cosmoly genre nebula textures — NASA / ESA / Hubble / JWST public domain
+All images obtained via images.nasa.gov (NASA Image and Video Library).
+NASA media is generally not copyrighted (public domain) unless noted.
+
+Genre mapping:
+  hiphop      -> bubble.jpg     NASA GSFC_20171208_Archive_e002039  Hubble Bubbles And Baby Stars
+  pop         -> lagoon.jpg     NASA GSFC_20171208_Archive_e001955  Hubble Lagoon Nebula
+  rock        -> orion.jpg      NASA PIA01322                       Chaos at the Heart of Orion
+  rnb         -> trifid.jpg     NASA PIA07226                       Trifid Nebula (Spitzer/Hubble)
+  electronic  -> helix.jpg      NASA PIA18164                       Helix Nebula
+  jazz        -> crab.jpg       NASA PIA03606                       Crab Nebula
+  latin       -> horsehead.jpg  NASA PIA16008                       Horsehead Nebula (Hubble)
+  country     -> carina.jpg     NASA GSFC_20171208_Archive_e002076  Carina Nebula landscape
+  indie       -> mystic.jpg     NASA PIA15985                       Carina "Mystic Mountain"
+  metal       -> pillars.jpg    NASA GSFC_20171208_Archive_e000842  Pillars of Creation (Hubble)
+
+Resized to max ~2048px edge for GPU friendliness. Credit: NASA/ESA.

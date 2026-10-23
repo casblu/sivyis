@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 460" role="img" aria-labelledby="t d">
+  <title id="t">Overtone / harmonic series</title>
+  <desc id="d">Partials of a vibrating body</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0618"/><stop offset="100%" stop-color="#120a28"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="720" height="460" rx="18" fill="url(#bg)"/>
+  <rect x="1" y="1" width="718" height="458" rx="17" fill="none" stroke="rgba(122,240,255,0.22)" stroke-width="1.5"/>
+  <text x="36" y="42" fill="#7af0ff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="0.08em">OVERTONE SERIES</text>
+<text x="36" y="64" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Harmonic partials of a vibrating string or air column (f, 2f, 3f…)</text>
+<rect x="70" y="144" width="48" height="236" rx="6" fill="#7af0ff" opacity="0.85" filter="url(#glow)"/>
+<text x="94" y="134" text-anchor="middle" fill="#7af0ff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">C</text>
+<text x="94" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">1</text>
+<rect x="145" y="172" width="48" height="208" rx="6" fill="#34d399" opacity="0.85" filter="url(#glow)"/>
+<text x="169" y="162" text-anchor="middle" fill="#34d399" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">C</text>
+<text x="169" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">2</text>
+<rect x="220" y="200" width="48" height="180" rx="6" fill="#a78bfa" opacity="0.85" filter="url(#glow)"/>
+<text x="244" y="190" text-anchor="middle" fill="#a78bfa" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">G</text>
+<text x="244" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">3</text>
+<rect x="295" y="228" width="48" height="152" rx="6" fill="#60a5fa" opacity="0.85" filter="url(#glow)"/>
+<text x="319" y="218" text-anchor="middle" fill="#60a5fa" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">C</text>
+<text x="319" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">4</text>
+<rect x="370" y="256" width="48" height="124" rx="6" fill="#fbbf24" opacity="0.85" filter="url(#glow)"/>
+<text x="394" y="246" text-anchor="middle" fill="#fbbf24" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">E</text>
+<text x="394" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">5</text>
+<rect x="445" y="284" width="48" height="96" rx="6" fill="#fb7185" opacity="0.85" filter="url(#glow)"/>
+<text x="469" y="274" text-anchor="middle" fill="#fb7185" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">G</text>
+<text x="469" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">6</text>
+<rect x="520" y="312" width="48" height="68" rx="6" fill="#c084fc" opacity="0.85" filter="url(#glow)"/>
+<text x="544" y="302" text-anchor="middle" fill="#c084fc" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">~B♭</text>
+<text x="544" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">7</text>
+<rect x="595" y="340" width="48" height="40" rx="6" fill="#94a3b8" opacity="0.85" filter="url(#glow)"/>
+<text x="619" y="330" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">C</text>
+<text x="619" y="404" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">8</text>
+<text x="36" y="100" fill="#cbd5e1" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Amplitude sketch (not to scale) · partial number below</text>
+<text x="36" y="430" fill="#64748b" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11">Timbre = mix of partial strengths · consonance often tracks low-integer ratios</text>
+  <text x="36" y="442" fill="#64748b" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11">Cosmoly diagram · educational sketch</text>
+</svg>
