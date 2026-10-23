@@ -388,8 +388,8 @@ export class GalaxyScene {
     this.scene.add(this.field)
     this.scene.add(this.makeStarfield(1400, 260, 1.05))
     this.coreDust = this.makeCoreDust()
-    this.scene.add(this.coreDust)
-    this.addCoreGlow()
+    // removed: orange galactic-core dust + glow spheres at origin (Txai 10/23)
+    void this.addCoreGlow
     this.spawnGenreNebulae()
     this.spawnSubgenreNebulae()
     this.spawnArtists()
