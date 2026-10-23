@@ -109,6 +109,13 @@ ui.onLookAt = (artist) => {
 }
 
 ui.onSendBtc = (artist) => {
+  // Full-screen profile hides the star; on zap the profile turns translucent so the star shines through.
+  const panel = document.getElementById('panel')
+  galaxy.setViewShift(0, 0)
+  tmpArtistPos.set(...artist.position)
+  fly.lookAtArtist(tmpArtistPos.clone())
+  panel?.classList.add('zapping')
+  window.setTimeout(() => panel?.classList.remove('zapping'), 1900)
   galaxy.zapArtist(artist.id)
   playScreenZap({ color: artist.color, name: artist.name })
 }
@@ -341,6 +348,8 @@ function panelShift(): [number, number] {
   const r = panel.getBoundingClientRect()
   const w = window.innerWidth
   const h = window.innerHeight
+  void r; void w; void h
+  return [0, 0] // full-screen profile
   if (r.width < w * 0.9) return [Math.round(Math.min(r.width, w - r.left) / 2), 0] // side panel: centre in left area
   const covered = Math.max(0, h - Math.max(0, r.top))
   return [0, Math.round(covered / 2)] // bottom sheet: centre in top area
@@ -357,9 +366,7 @@ function frameSelected(artist: { position: [number, number, number] }): void {
       const cs = getComputedStyle(panel)
       const pw = panel.offsetWidth
       const ph = panel.offsetHeight
-      if (pw < w * 0.9) sx = Math.round(pw / 2)
-      else sy = Math.round(ph / 2)
-      void cs
+      void cs; void pw; void ph; void w // profile is full-screen now: star sits centred behind it
     }
     galaxy.setViewShift(sx, sy)
     tmpArtistPos.set(...artist.position)

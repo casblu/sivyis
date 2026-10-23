@@ -1714,3 +1714,27 @@ kbd {
 @media (min-width: 721px) and (pointer: fine) {
   .artist-hero { margin: -28px -22px 6px; border-radius: 0; height: 280px; }
 }
+
+/* —— Full-screen artist profile (all sizes). Star hidden behind; shines through on zap. —— */
+#panel, #panel.open {
+  inset: 0 !important; top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+  width: 100% !important; height: 100% !important; height: 100dvh !important; max-width: none !important;
+  border: 0 !important; border-radius: 0 !important;
+  background: #0b0b1e !important; backdrop-filter: none;
+  padding: 0 18px calc(32px + var(--safe-bottom)) !important;
+  z-index: 60 !important;
+  transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1), opacity 0.35s ease, background-color 0.35s ease;
+}
+#panel { transform: translateY(105%); }
+#panel.open { transform: none; }
+#panel #sheet-handle { display: none; }
+#panel .artist-hero { margin: 0 -18px 6px !important; border-radius: 0 !important; height: min(46vh, 380px) !important; }
+#panel #panel-close {
+  position: fixed; top: calc(12px + var(--safe-top)); left: calc(12px + var(--safe-left, 0px)); right: auto;
+  width: 44px; height: 44px; border-radius: 50%; font-size: 1.6rem; z-index: 61;
+  background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.25); color: #fff;
+}
+#panel #panel-body { max-width: 720px; margin: 0 auto; }
+#panel.zapping { background: rgba(4,4,14,0.08) !important; }
+#panel.zapping > * { opacity: 0.06; transition: opacity 0.25s ease; }
+#panel > * { transition: opacity 0.45s ease; }

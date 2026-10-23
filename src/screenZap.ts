@@ -53,7 +53,7 @@ export function playScreenZap(opts: { color?: number; name?: string } = {}): voi
   const frame = (now: number) => {
     const el = now - t0
     if (el > DUR) { window.removeEventListener('resize', resize); cv.remove(); return }
-    const cx = W / 2, cy = H * 0.45, R = Math.min(W, H) * 0.28
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.28
     const fade = el < DUR - 450 ? 1 : Math.max(0, (DUR - el) / 450)
     ctx.globalCompositeOperation = 'source-over'
     ctx.clearRect(0, 0, W, H)
