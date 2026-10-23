@@ -17,7 +17,7 @@ import {
   type Subgenre,
 } from './artists.ts'
 import { GENRE_NEBULA_PHOTO } from './nebulaPhotos.ts'
-import { LightningFX, playThunder } from './lightning.ts'
+import { LightningFX } from './lightning.ts'
 import { buildSkeleton, maskBank, puffTexture, dustTexture, rng, type SkelPoint } from './nebulaShape.ts'
 
 
@@ -476,7 +476,6 @@ export class GalaxyScene {
       const prev = this.shakes.get(h)
       this.shakes.set(h, { age: 0, base: prev ? prev.base : h.group.position.clone(), fired: false })
     }
-    playThunder()
   }
 
   private updateZaps(dt: number): void {
