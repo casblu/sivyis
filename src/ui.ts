@@ -15,6 +15,38 @@ import { mountPhilosophyWeb, type PhilosophyWebHandle } from './philosophyWeb.ts
 import { mountMusicHistory, type MusicHistoryHandle } from './musicHistory.ts'
 import { formatBtc, wallet } from './wallet.ts'
 import { memorialYears } from './memorials.ts'
+import artistPhotos from './artistPhotos.json'
+
+type Photo = { file: string; artist: string; license: string; source: string }
+const PHOTOS = artistPhotos as Record<string, Photo[]>
+const BASE = import.meta.env.BASE_URL
+
+function heroHtml(artist: Artist): string {
+  const base = artist.id.includes('__') ? artist.id.slice(0, artist.id.indexOf('__')) : artist.id
+  const hex = '#' + artist.color.toString(16).padStart(6, '0')
+  const photos: { url: string; credit: string; href: string }[] = (PHOTOS[base] ?? []).map((p) => ({
+    url: BASE + 'artists/' + p.file,
+    credit: `Photo: ${p.artist} · ${p.license} · Wikimedia Commons`,
+    href: p.source,
+  }))
+  if (!photos.length && artist.open?.image) photos.push({ url: artist.open.image, credit: 'Image: artist feed', href: artist.open.image })
+  const initials = artist.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+  const main = photos[0]
+  const gallery = photos.length > 1
+    ? `<div class="hero-gallery">${photos.map((p, i) => `<button type="button" class="hero-thumb${i === 0 ? ' active' : ''}" data-i="${i}"><img loading="lazy" src="${escapeHtml(p.url)}" alt=""></button>`).join('')}</div>`
+    : ''
+  return `<div class="artist-hero" style="--c:${hex}" data-photos='${escapeHtml(JSON.stringify(photos))}'>
+      <div class="hero-fallback"><span>${escapeHtml(initials)}</span></div>
+      ${main ? `<img class="hero-img" src="${escapeHtml(main.url)}" alt="${escapeHtml(artist.name)}" onerror="this.remove()">` : ''}
+      <div class="hero-fade"></div>
+      <div class="hero-text">
+        <p class="kicker">${escapeHtml(artist.genre)} · ${escapeHtml(artist.subgenre)}</p>
+        <h2>${escapeHtml(artist.name)}</h2>
+      </div>
+    </div>
+    ${main ? `<a class="hero-credit" href="${escapeHtml(main.href)}" target="_blank" rel="noopener">${escapeHtml(main.credit)}</a>` : ''}
+    ${gallery}`
+}
 
 export type AppTab = 'galaxy' | 'philosophy' | 'history' | 'profile'
 
@@ -370,10 +402,8 @@ export class UI {
     const related = relatedArtists(artist)
 
     must(this.panel, '#panel-body').innerHTML = `
-      <div class="swatch" style="--c:#${artist.color.toString(16).padStart(6, '0')}"></div>
-      <p class="kicker">${escapeHtml(artist.genre)} · ${escapeHtml(artist.subgenre)}</p>
+      ${heroHtml(artist)}
       ${alsoInLine(artist)}
-      <h2>${escapeHtml(artist.name)}</h2>
       ${artist.memorial ? `<p class="memorial-line">✦ In memoriam · ${memorialYears(artist.memorial)}${artist.memorial.place ? ' · ' + escapeHtml(artist.memorial.place) : ''}</p>` : ''}
       ${openBadges(artist)}
       <p class="bio">${escapeHtml(artist.bio)}</p>
@@ -416,6 +446,23 @@ export class UI {
     this.panel.classList.add('open')
     this.panel.setAttribute('aria-hidden', 'false')
 
+    const pb = must(this.panel, '#panel-body')
+    pb.scrollTop = 0
+    this.panel.scrollTop = 0
+    const hero = pb.querySelector<HTMLElement>('.artist-hero')
+    pb.querySelectorAll<HTMLButtonElement>('.hero-thumb').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const list = JSON.parse(hero?.dataset.photos ?? '[]') as { url: string; credit: string; href: string }[]
+        const p = list[Number(btn.dataset.i)]
+        if (!p || !hero) return
+        let img = hero.querySelector<HTMLImageElement>('.hero-img')
+        if (!img) { img = document.createElement('img'); img.className = 'hero-img'; hero.insertBefore(img, hero.querySelector('.hero-fade')) }
+        img.src = p.url
+        const cr = pb.querySelector<HTMLAnchorElement>('.hero-credit')
+        if (cr) { cr.textContent = p.credit; cr.href = p.href }
+        pb.querySelectorAll('.hero-thumb').forEach((b) => b.classList.toggle('active', b === btn))
+      })
+    })
     must(this.panel, '#panel-body').querySelectorAll<HTMLButtonElement>('.track').forEach((btn) => {
       btn.addEventListener('click', () => {
         const i = Number(btn.dataset.i)

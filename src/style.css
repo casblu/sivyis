@@ -422,7 +422,7 @@ kbd {
   right: 0;
   bottom: 0;
   top: auto;
-  height: min(72dvh, 640px);
+  height: min(60dvh, 600px);
   width: 100%;
   max-width: 100vw;
   background: linear-gradient(180deg, rgba(14, 16, 40, 0.97), rgba(8, 6, 20, 0.96));
@@ -1687,3 +1687,30 @@ kbd {
 .slide-confirm.dragging .slide-thumb{cursor:grabbing;box-shadow:0 0 26px rgba(170,220,255,1)}
 .slide-confirm.confirmed .slide-label{opacity:1}
 .screen-zap{position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;pointer-events:none}
+
+/* —— Spotify-style artist hero —— */
+.artist-hero {
+  position: relative;
+  margin: 0 -18px 6px;
+  height: 230px;
+  overflow: hidden;
+  border-radius: 18px 18px 0 0;
+  background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--c) 70%, #fff 10%), color-mix(in srgb, var(--c) 35%, #0a0818) 60%, #0a0818);
+}
+.hero-fallback { position: absolute; inset: 0; display: grid; place-items: center; }
+.hero-fallback span { font: 700 4.2rem 'Exo 2', sans-serif; color: rgba(255,255,255,0.22); letter-spacing: 0.05em; }
+.hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+.hero-fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,8,24,0) 35%, rgba(12,12,34,0.75) 75%, rgba(13,14,38,0.98) 100%); }
+.hero-text { position: absolute; left: 18px; right: 60px; bottom: 10px; }
+.hero-text .kicker { margin: 0 0 2px; text-shadow: 0 1px 6px #000; }
+#panel .hero-text h2 { font-size: 2.3rem; line-height: 1.05; margin: 0; padding: 0; text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
+.hero-credit { display: block; font-size: 0.62rem; opacity: 0.5; color: inherit; text-decoration: none; margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero-credit:hover { opacity: 0.85; text-decoration: underline; }
+.hero-gallery { display: flex; gap: 8px; margin: 0 0 14px; overflow-x: auto; }
+.hero-thumb { flex: 0 0 auto; width: 58px; height: 58px; padding: 0; border-radius: 10px; overflow: hidden; border: 2px solid transparent; background: #111; cursor: pointer; }
+.hero-thumb.active { border-color: var(--accent-2, #8cf); }
+.hero-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#panel-close { background: rgba(0,0,0,0.45); z-index: 3; }
+@media (min-width: 721px) and (pointer: fine) {
+  .artist-hero { margin: -28px -22px 6px; border-radius: 0; height: 280px; }
+}

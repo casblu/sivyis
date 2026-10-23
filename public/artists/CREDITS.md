@@ -1,0 +1,196 @@
+# Artist photo credits
+
+All images from Wikimedia Commons, used under their stated licenses. Resized to max 720px.
+
+- Kendrick Lamar — `kendrick-lamar-0.jpg` — Raph_PH — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:KendrickSZASPurs230725-144_(cropped)_desaturated.jpg
+- Kendrick Lamar — `kendrick-lamar-2.jpg` — Billyrhm — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:KendrickLive.jpg
+- Drake — `drake-0.jpg` — GabboT — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Drake_at_The_Carter_Effect_2017_(36818935200)_(cropped).jpg
+- Nicki Minaj — `nicki-minaj-0.jpg` — Gage Skidmore from Surprise, AZ, United States of America — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Nicki_Minaj_2025_(3x4_cropped).jpg
+- Nicki Minaj — `nicki-minaj-1.jpg` — hnnssy25 — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:MinajHammersteinBallroomNYC.jpg
+- Nicki Minaj — `nicki-minaj-2.jpg` — [1] — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Nicki_Minaj_Femme_2011.jpg
+- J. Cole — `j-cole-0.jpg` — HOTSPOTATL — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:HOTSPOTATL_-_21_Savage_%26_J.Cole_Light_Birthday_Bash_ATL_2023_On_FIRE_(xu6HKf40MX0_-_2m38s)_(cropped).jpg
+- J. Cole — `j-cole-2.jpg` — H D — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:J._Cole_2010.jpg
+- Travis Scott — `travis-scott-0.jpg` — PhilipRomano — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:TravisScott-byPhilipRomano_(cropped).jpg
+- Travis Scott — `travis-scott-1.jpg` — 2038doz — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Travis_Scott_at_Basel_Castle_2013.jpg
+- Travis Scott — `travis-scott-2.jpg` — The Come Up Show — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Travi$_Scott_2014_2.jpg
+- Cardi B — `cardi-b-0.jpg` — Runawaymo — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Cardi_B_at_2026_Essence_Festival_of_Culture_02_(cropped)_(cropped).jpg
+- Cardi B — `cardi-b-2.jpg` — ATLAHWorldwide — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Cardi_B_2016.jpg
+- Jay-Z — `jay-z-0.jpg` — Mikamote — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Jay-Z-02-mika.jpg
+- Jay-Z — `jay-z-1.jpg` — i am guilty — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Jay-Z_concert_(cropped).jpg
+- Jay-Z — `jay-z-2.jpg` — Mike Barry from Wirral, England — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Jay-Z_3.jpg
+- Missy Elliott — `missy-elliott-0.jpg` — Atlantic Records — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Missy_Elliot.jpg
+- Taylor Swift — `taylor-swift-0.jpg` — iHeartRadioCA — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_(3).png
+- Taylor Swift — `taylor-swift-1.jpg` — Brian Cantoni — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Taylor_Swift_at_Yahoo_2007_(cropped).jpg
+- Taylor Swift — `taylor-swift-2.jpg` — Angela George at https://www.flickr.com/photos/sharongraphics/ — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:TaylorSwiftApr09.jpg
+- Beyoncé — `beyonc-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Beyonc%C3%A9_-_Tottenham_Hotspur_Stadium_-_1st_June_2023_(10_of_118)_(52946364598)_(best_crop).jpg
+- Beyoncé — `beyonc-1.jpg` — John Ferguson — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Beyonce_Knowles_at_age_19_(cropped).jpeg
+- Beyoncé — `beyonc-2.jpg` — Spencer Alfie — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Randy_Waldman_%26_Beyonce_-_National_Anthem_Arrangement_2004_Super_Bowl_(cropped).jpg
+- Ariana Grande — `ariana-grande-0.jpg` — Barbie Simons — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Ariana_Grande_promoting_Wicked_(2024).jpg
+- Ariana Grande — `ariana-grande-1.jpg` — David Shankbone — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Ariana_Grande_by_David_Shankbone_(cropped).jpg
+- Ariana Grande — `ariana-grande-2.jpg` — Melissa Rose — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:ArianaGrandeDecember2013_ohne_Hintergrund.jpg
+- The Weeknd — `the-weeknd-0.jpg` — Brian Ziff — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:The_Weeknd_Portrait_by_Brian_Ziff.jpg
+- The Weeknd — `the-weeknd-1.jpg` — David Hwang — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:The_Weeknd_by_David_Hwang.jpg
+- The Weeknd — `the-weeknd-2.jpg` — Kayla Johnson — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:The_Weeknd_Bumbershoot_2015.jpg
+- Billie Eilish — `billie-eilish-0.jpg` — Raph_PH — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:BillieEilishO2140725-39_-_54665577407_(cropped).jpg
+- Billie Eilish — `billie-eilish-1.jpg` — Icebox on YouTube — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Billie_Eilish_and_Maggie_Baird_Nov_2018.png
+- Billie Eilish — `billie-eilish-2.jpg` — Justin Higuchi from Los Angeles, CA, USA — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:The_Hi_Hat_-_Billie_Eilish_08_10_2017_-3_(36529010754).jpg
+- Dua Lipa — `dua-lipa-0.jpg` — Harald Krichel — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Dua_Lipa-69798_(cropped).jpg
+- Dua Lipa — `dua-lipa-1.jpg` — Harald Krichel — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:British_singer_and_songwriter_Dua_Lipa_at_the_SWR3_New_Pop_Festival_2016.jpg
+- Dua Lipa — `dua-lipa-2.jpg` — Justin Higuchi from Los Angeles, CA, USA — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Dua_Lipa_02_08_2018_-15_(25884030647).jpg
+- Bruno Mars — `bruno-mars-0.jpg` — slgckgc — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:BrunoMars24KMagicWorldTourLive_(cropped).jpg
+- Bruno Mars — `bruno-mars-1.jpg` — Brothers Le — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Bruno_Mars_keyboard.jpg
+- Rihanna — `rihanna-0.jpg` — SIGMA — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Rihanna_Fenty_2018.png
+- Rihanna — `rihanna-1.jpg` — Ulises Icardi — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Casa_donde_vivi%C3%B3_Rihanna,_a_pocos_metros_del_puerto_de_Bridgetown.jpg
+- Rihanna — `rihanna-2.jpg` — Gemma Mary from Gympie, Australia — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Rihanna-brisbane.jpg
+- Queen — `queen-0.jpg` — Koh Hasebe; Distributed by Elektra Records — Public domain — https://commons.wikimedia.org/wiki/File:Queen_A_Night_At_The_Opera_(1975_Elektra_publicity_photo_02).jpg
+- Queen — `queen-1.jpg` — Comunità Queeniana — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Queen_@_Imperial_College_campus_-_1970.jpg
+- Queen — `queen-2.jpg` — Spudgun67 — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Queen_First_Public_Performance_Here_18_July_1970.jpg
+- The Beatles — `the-beatles-0.jpg` — Dezo Hoffmann, Distributed by Capitol Records — Public domain — https://commons.wikimedia.org/wiki/File:The_Beatles_1963_Dezo_Hoffman_Capitol_Records_press_photo_2.jpg
+- The Beatles — `the-beatles-2.jpg` — PRESSENS BILD (Mikael J. Nordström) — Public domain — https://commons.wikimedia.org/wiki/File:The_Beatles_and_Lill-Babs_1963.jpg
+- Foo Fighters — `foo-fighters-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Glasto2023.jpg
+- Foo Fighters — `foo-fighters-1.jpg` — Raphael Pour-Hashemi — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:FoosDublin210819-2_(48620472807)_(cropped).jpg
+- Foo Fighters — `foo-fighters-2.jpg` — Paul Carless from St Albans, UK — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Foo_Fighters_-_Phoenix_Festival_1996_(12882631835).jpg
+- Arctic Monkeys — `arctic-monkeys-0.jpg` — Bill Ebbesen — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Arctic_Monkeys_-_Orange_Stage_-_Roskilde_Festival_2014.jpg
+- Arctic Monkeys — `arctic-monkeys-1.jpg` — Lola's Big Adventure! — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Arctic_Monkeys_live.jpg
+- Arctic Monkeys — `arctic-monkeys-2.jpg` — Nick O'Malley and Jamie Cook images taken by flicker user tammylo.
+Alex Turner i — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Arctic_Monkeys_heads.jpg
+- Red Hot Chili Peppers — `red-hot-chili-peppers-0.jpg` — Kreepin Deth — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:RHCP_Live_in_London_26_June_2022.jpg
+- Red Hot Chili Peppers — `red-hot-chili-peppers-1.jpg` — Gary Friedman, Los Angeles Times — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Red_Hot_Chili_Peppers,_1984.jpg
+- Red Hot Chili Peppers — `red-hot-chili-peppers-2.jpg` — Rob C. Croes (ANEFO) — CC0 — https://commons.wikimedia.org/wiki/File:RedHotChiliPeppersAdam1989.jpg
+- Nirvana — `nirvana-0.jpg` — Chanrasmey Miech — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Gautama_Buddha_gains_nirvana.jpg
+- Nirvana — `nirvana-1.jpg` — Unknown authorUnknown author — Public domain — https://commons.wikimedia.org/wiki/File:Kalpasutra_Mahavira_Nirvana.jpg
+- The Rolling Stones — `the-rolling-stones-0.jpg` — Jim Pietryga — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:The_Rolling_Stones_Summerfest_in_Milwaukee_-_2015.jpg
+- The Rolling Stones — `the-rolling-stones-1.jpg` — Ethan Doyle White — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Blue_Plaque_for_the_Rolling_Stones_at_Dartford_Railway_Station.jpg
+- Aretha Franklin — `aretha-franklin-0.jpg` — Atlantic Records
+
+(Life time: Published before 1978 without a copyright notice) — Public domain — https://commons.wikimedia.org/wiki/File:Aretha_Franklin_1968.jpg
+- Aretha Franklin — `aretha-franklin-1.jpg` — Thomas R Machnitzki — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Aretha_Franklin_birthplace_406_Lucy_Ave_Memphis_TN_06.jpg
+- Stevie Wonder — `stevie-wonder-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:SWonderBSTHyde060719-72_(cropped).jpg
+- Stevie Wonder — `stevie-wonder-1.jpg` — Jack de Nijs for Anefo — CC0 — https://commons.wikimedia.org/wiki/File:Stevie_Wonder_1967_(1).jpg
+- Frank Ocean — `frank-ocean-0.jpg` — Andras Ladocsi — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Frank_Ocean_2022_Blonded.jpg
+- Frank Ocean — `frank-ocean-1.jpg` — Dave Gold — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Frank_Ocean_December_2011_(cropped).jpg
+- Frank Ocean — `frank-ocean-2.jpg` — david_hwang — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Tyler_the_Creator_and_Frank_Ocean_Coachella_2012.jpg
+- SZA — `sza-0.jpg` — Raph_PH — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:KendrickSZASPurs230725-19_-_54683179509_(cropped)_(cropped).jpg
+- SZA — `sza-1.jpg` — Tiffany Komon for The Come Up Show — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:SZA,_August_2013.jpg
+- Usher — `usher-0.jpg` — US Embassy Italy — Public domain — https://commons.wikimedia.org/wiki/File:Usher_Milan_2026.jpg
+- Usher — `usher-1.jpg` — PA2 Anastasia Burns — Public domain — https://commons.wikimedia.org/wiki/File:Usher04.jpg
+- Usher — `usher-2.jpg` — Looking_to_Obama.jpg: Steve Jurvetson
+derivative work: Adabow (talk) — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Usher_Looking_To_Obama.jpg
+- Alicia Keys — `alicia-keys-0.jpg` — PhilipRomanoPhoto — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Alicia_Keys_(2025).jpg
+- Alicia Keys — `alicia-keys-1.jpg` — John Mathew Smith & www.celebrity-photos.com from Laurel  Maryland, USA — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Alicia_Keyes_(5112509447)_(cropped).jpg
+- Alicia Keys — `alicia-keys-2.jpg` — Jen Keys — Public domain — https://commons.wikimedia.org/wiki/File:Alicia_Keys.jpg
+- Mary J. Blige — `mary-j-blige-0.jpg` — WBLS — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Mary_J_Blige_in_2022.png
+- Mary J. Blige — `mary-j-blige-1.jpg` — Kingkongphoto & www.celebrity-photos.com from Laurel  Maryland, USA — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Mary_J._Blige_1998.jpg
+- Mary J. Blige — `mary-j-blige-2.jpg` — Mikamote — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Mary_j-02-mika.jpg
+- Daft Punk — `daft-punk-0.jpg` — Sony Music Entertainment, additional editing by W.carter — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Daft_Punk_in_2013_2-_centered.jpg
+- Daft Punk — `daft-punk-1.jpg` — .
+
+The original uploader was Bruce The Deus at Italian Wikipedia. — Public domain — https://commons.wikimedia.org/wiki/File:Daft_Punk.png
+- Daft Punk — `daft-punk-2.jpg` — Minyoung Choi — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Daft_Punk_2007.jpg
+- Calvin Harris — `calvin-harris-0.jpg` — Festival Eurockéennes — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Calvin_Harris_001.jpg
+- Calvin Harris — `calvin-harris-1.jpg` — Maxjjones — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:CalvinVenice.jpg
+- Calvin Harris — `calvin-harris-2.jpg` — James — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Calvin_Harris_2011_(7395509804)_(cropped).jpg
+- Skrillex — `skrillex-0.jpg` — Carl Pocket — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:From_First_To_Last_-_Emo_Nite_2_-_PH_Carl_Pocket_(cropped).jpg
+- Skrillex — `skrillex-2.jpg` — Paul Nicholson — Public domain — https://commons.wikimedia.org/wiki/File:Logo-QFF-2023-Skrillex.png
+- Deadmau5 — `deadmau5-0.jpg` — GoatLordServant — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Deadmau5_Belknap_Park_2023_(cropped).jpg
+- Deadmau5 — `deadmau5-1.jpg` — Octavio Ruiz Cervera from Mexico, Mexico — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Deadmau5_live.jpg
+- Deadmau5 — `deadmau5-2.jpg` — Eli Watson — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Deadmau5_LED_Cube.jpg
+- Avicii — `avicii-0.jpg` — The Perfect World Foundation — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Avicii_2014_003cr.jpg
+- Avicii — `avicii-1.jpg` — Avicii_performing_in_Paris.jpg: Jalil Arfaoui
+derivative work: Lpdrew (talk) — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Avicii.jpg
+- Avicii — `avicii-2.jpg` — GlobalGrindTV — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Avicii_interview_for_GlobalGrindTV.jpg
+- Disclosure — `disclosure-0.jpg` — Nick Minieri — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Disclosure_2013.jpg
+- Aphex Twin — `aphex-twin-0.jpg` — Blackphoenix94 — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Aphextwin1.jpg
+- Aphex Twin — `aphex-twin-2.jpg` — Octavio Ruiz Cervera — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Aphex_Twin,_2008.jpg
+- Miles Davis — `miles-davis-0.jpg` — Tom Palumbo from New York City, USA — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Miles_Davis_by_Palumbo_cropped.jpg
+- Miles Davis — `miles-davis-1.jpg` — Pierssen — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:House_of_Miles,_East_St._Louis.jpg
+- Miles Davis — `miles-davis-2.jpg` — William P. Gottlieb — Public domain — https://commons.wikimedia.org/wiki/File:Charlie_Parker,_Tommy_Potter,_Miles_Davis,_Duke_Jordan,_Max_Roach_(Gottlieb_06851).jpg
+- John Coltrane — `john-coltrane-0.jpg` — Gelderen, Hugo van / Anefo — CC0 — https://commons.wikimedia.org/wiki/File:John_Coltrane_1963_cropped_ver2.jpg
+- John Coltrane — `john-coltrane-1.jpg` — U.S._Naval_Reserve_portrait_of_Johnny_Coltrane.jpg: U.S. Naval Reserve photograp — Public domain — https://commons.wikimedia.org/wiki/File:U.S._Naval_Reserve_portrait_of_Johnny_Coltrane_edit.jpg
+- John Coltrane — `john-coltrane-2.jpg` — Dave Brinkman (ANEFO) — CC0 — https://commons.wikimedia.org/wiki/File:JohnColtrane1961.jpg
+- Ella Fitzgerald — `ella-fitzgerald-0.jpg` — Carl Van Vechten — Public domain — https://commons.wikimedia.org/wiki/File:Ella_Fitzgerald_6_(cropped).jpg
+- Ella Fitzgerald — `ella-fitzgerald-1.jpg` — Carl Van Vechten — Public domain — https://commons.wikimedia.org/wiki/File:Ella_Fitzgerald_by_Carl_Van_Vechten_-_American_Flag.jpg
+- Ella Fitzgerald — `ella-fitzgerald-2.jpg` — William Paul Gottlieb (28 Jan 1917 - 23 Apr 2006) — CC0 — https://commons.wikimedia.org/wiki/File:Ella_Fitzgerald_(with_Ray_Brown,_Dizzy_Gillespie,_and_Milt_Jackson)_in_1947_(NPG-B6000130C)_(cropped).jpg
+- Herbie Hancock — `herbie-hancock-0.jpg` — Library of Congress Life — CC0 — https://commons.wikimedia.org/wiki/File:Herbie_Hancock_2023.jpg
+- Herbie Hancock — `herbie-hancock-1.jpg` — ICM-International Creative Management (management) — Public domain — https://commons.wikimedia.org/wiki/File:Herbie_Hancock_and_The_Headhunters_1975.JPG
+- Herbie Hancock — `herbie-hancock-2.jpg` — CBS Television — Public domain — https://commons.wikimedia.org/wiki/File:Herbie_Hancock_1976.JPG
+- Kamasi Washington — `kamasi-washington-0.jpg` — Krists Luhaers — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:POS17_@Kristsll-397_(36005903335)_(cropped).jpg
+- Kamasi Washington — `kamasi-washington-1.jpg` — Fred von Lohmann — CC0 — https://commons.wikimedia.org/wiki/File:Kamasi_Washington_Coachella.jpg
+- Norah Jones — `norah-jones-0.jpg` — PhilipRomanoPhoto — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:NorahJones-byPhilipRomano3.jpg
+- Norah Jones — `norah-jones-1.jpg` — Norah Jones — Public domain — https://commons.wikimedia.org/wiki/File:Norah_Jones_signature.png
+- Norah Jones — `norah-jones-2.jpg` — Georges Biard — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Norah_Jones_Cannes_1.jpg
+- Louis Armstrong — `louis-armstrong-0.jpg` — Harry Warnecke / Gus Schoenbaechler — Public domain — https://commons.wikimedia.org/wiki/File:Louis_Armstrong_in_Color_(restored).jpg
+- Louis Armstrong — `louis-armstrong-1.jpg` — Staff of the Times-Democrat — Public domain — https://commons.wikimedia.org/wiki/File:Louis_Armstrong_Arrest_2_Jan_1913_Times-Democrat.jpg
+- Bad Bunny — `bad-bunny-0.jpg` — Toglenn — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Bad_Bunny_2019_by_Glenn_Francis_(cropped).jpg
+- Bad Bunny — `bad-bunny-1.jpg` — Bad Bunny — Public domain — https://commons.wikimedia.org/wiki/File:Bad_Bunny_sig.png
+- Bad Bunny — `bad-bunny-2.jpg` — Comecoquito — CC0 — https://commons.wikimedia.org/wiki/File:Bad_Bunny_Performs.jpg
+- Shakira — `shakira-0.jpg` — Junta de Andalucía — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:2023-11-16_Gala_de_los_Latin_Grammy,_03_(cropped)02.jpg
+- Shakira — `shakira-1.jpg` — martinvarsavsky from Madrid, Spain — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Shakira_in_concert.jpg
+- Shakira — `shakira-2.jpg` — Andres Arranz — CC BY 2.5 — https://commons.wikimedia.org/wiki/File:Shakira_Rio_06.jpg
+- Daddy Yankee — `daddy-yankee-0.jpg` — Daddy Yankee — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Daddy_Yankee_-_The_Kingdom_(Official_Q_%26_A).png
+- Daddy Yankee — `daddy-yankee-1.jpg` — The original uploader was TIP-XL at English Wikipedia. — Public domain — https://commons.wikimedia.org/wiki/File:DaddyYankee.jpg
+- Daddy Yankee — `daddy-yankee-2.jpg` — Al Vazquez — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:2009_Billboard_Awards_Red_Carpet_-_Daddy_Yankee_-_6,17_sec.png
+- Celia Cruz — `celia-cruz-0.jpg` — Ibrahim Arce (Narcy Studios photographer), most likely — Public domain — https://commons.wikimedia.org/wiki/File:Celia_Cruz_1957_color.jpg
+- Celia Cruz — `celia-cruz-1.jpg` — Ibrahim Arce (Narcy Studios photographer), most likely — Public domain — https://commons.wikimedia.org/wiki/File:Celia_Cruz_y_La_Sonora_Matancera.jpg
+- Celia Cruz — `celia-cruz-2.jpg` — Unknown authorUnknown author — Public domain — https://commons.wikimedia.org/wiki/File:Celia_Cruz_y_Pedro_Knight.jpg
+- J Balvin — `j-balvin-0.jpg` — Jeff Pinilla — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:J_Balvin,_Noisey_Meets;_Oct_2018.jpg
+- J Balvin — `j-balvin-1.jpg` — Radio energy7 — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Lesin_valencia_junto_j_balvin_(cropped).JPG
+- J Balvin — `j-balvin-2.jpg` — festivaldevinachile — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:J_Balvin_-_Sigo_Extra%C3%B1%C3%A1ndote_-_Festival_de_Vi%C3%B1a_del_Mar_2017_(2).jpg
+- Rosalía — `rosal-a-0.jpg` — Tele Urban — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Rosal%C3%ADa_entrevista_2025_01.png
+- Rosalía — `rosal-a-2.jpg` — Jwslubbock — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Rosalia,_Pull%26Bear_stage_2.jpg
+- Juanes — `juanes-0.jpg` — Junta de Andalucía — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:2023-11-16_Gala_de_los_Latin_Grammy,_14_(cropped).jpg
+- Juanes — `juanes-1.jpg` — Chris Duque — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:JuanesUnpluggedtour.JPG
+- Juanes — `juanes-2.jpg` — livepict.com — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Juanes_2008.06.25_006.jpg
+- Johnny Cash — `johnny-cash-0.jpg` — CBS Television — Public domain — https://commons.wikimedia.org/wiki/File:Johnny_Cash_1977.jpg
+- Johnny Cash — `johnny-cash-1.jpg` — Dr. Blazer — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Johnny_Cash_Boyhood_Home_(Dyess,_Arkansas).jpg
+- Johnny Cash — `johnny-cash-2.jpg` — Sun Records — Public domain — https://commons.wikimedia.org/wiki/File:Johnny_Cash_Promotional_Photo_2.jpg
+- Dolly Parton — `dolly-parton-0.jpg` — David Gahr — Public domain — https://commons.wikimedia.org/wiki/File:Young-Dolly-Parton_(higher_quality_scan)_(cropped).jpg
+- Dolly Parton — `dolly-parton-2.jpg` — Moeller Talent, Inc. Nashville (management) — Public domain — https://commons.wikimedia.org/wiki/File:Porter_Wagoner_and_Dolly_Parton_1969.jpg
+- Luke Combs — `luke-combs-0.jpg` — David Bergman — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Luke_Combs_interview.jpg
+- Luke Combs — `luke-combs-1.jpg` — Manouel Roman — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Luke_Combs_in_2020_2.jpg
+- Chris Stapleton — `chris-stapleton-0.jpg` — Steve Kwak - Maryland GovPics — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Chris_Stapleton_Concert_(48519730107)_(cropped).jpg
+- Chris Stapleton — `chris-stapleton-1.jpg` — Missmojorising — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Stapleton_ACL_20161002005.jpg
+- Shania Twain — `shania-twain-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Shania_Twain_Glaston2024_2806_300624_(22_of_173)_(53838020769)_(cropped).jpg
+- Shania Twain — `shania-twain-2.jpg` — Craig — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Shania_Twain_-_Come_on_Over_Tour_-_Boston.jpg
+- Carrie Underwood — `carrie-underwood-0.jpg` — Cosmopolitan UK — CC BY 3.0 — https://commons.wikimedia.org/wiki/File:191125_Carrie_Underwood_at_the_2019_American_Music_Awards_(cropped).png
+- Carrie Underwood — `carrie-underwood-1.jpg` — the_diet_starts_mond ay from Colorado — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:CroppedCarrieUnderwoodAtTheWorldArena.jpg
+- Carrie Underwood — `carrie-underwood-2.jpg` — Sgt. 1st Class Robert C. Brogan (RELEASED) — Public domain — https://commons.wikimedia.org/wiki/File:Carrie_Underwood_2006.jpg
+- Willie Nelson — `willie-nelson-0.jpg` — John Mathew Smith & www.celebrity-photos.com — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Willie_Nelson_(Retouched).jpg
+- Willie Nelson — `willie-nelson-1.jpg` — Bozotexino — Public domain — https://commons.wikimedia.org/wiki/File:Kris_Willie_Waylon.jpg
+- Willie Nelson — `willie-nelson-2.jpg` — Series: Jimmy Carter's Presidential Photographs , 1/20/1977 - 1/20/1981
+
+Collect — Public domain — https://commons.wikimedia.org/wiki/File:President_Jimmy_Carter_with_Willie_Nelson_and_his_guests.jpg
+- Radiohead — `radiohead-0.jpg` — Raph_PH — CC BY 4.0 — https://commons.wikimedia.org/wiki/File:RadioheadO2211125_composite.jpg
+- Radiohead — `radiohead-2.jpg` — Ronan Munro — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Radiohead_Curfew_advert.jpg
+- Tame Impala — `tame-impala-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Tame_Impala_at_Flow_Festival_Helsinki_Aug_10_2019_-24.jpg
+- Tame Impala — `tame-impala-1.jpg` — Michael Spencer — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Tame_Impala.jpg
+- Tame Impala — `tame-impala-2.jpg` — Stuart Sevastos — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Tame_Impala_@_Somerville_Auditorium_(26_4_2009)_(3493410996).jpg
+- Phoebe Bridgers — `phoebe-bridgers-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:BoygeniusKingstonEarly240823_(29_of_45)_(53138924957)_Cropped.jpg
+- Phoebe Bridgers — `phoebe-bridgers-2.jpg` — Martin Schumann / Wikipedia — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Phoebe_Bridgers_-_Haldern_Pop_Festival_2018-5.jpg
+- The National — `the-national-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:PrimaveraBarcW1Jun22_(104_of_318)_(52163773566).jpg
+- The National — `the-national-1.jpg` — Mike Mantin from Swansea, UK — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:The_National_@_Latitude_Festival_(831191340).jpg
+- The National — `the-national-2.jpg` — Jared Eberhardt (jaredeberhardt) — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:The_National_at_the_Coachella_Festival.jpg
+- Vampire Weekend — `vampire-weekend-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:EOTR010918-112_(45144652195).jpg
+- Vampire Weekend — `vampire-weekend-1.jpg` — Kekslover at German Wikipedia — CC BY-SA 2.0 de — https://commons.wikimedia.org/wiki/File:2007_11_02vampire_weekend.jpg
+- Vampire Weekend — `vampire-weekend-2.jpg` — Moses — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Flickr_-_moses_namkung_-_Vampire_Weekend-5.jpg
+- Lana Del Rey — `lana-del-rey-0.jpg` — Raph_PH — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:LanaDRPrimavera310524_(32_of_147)_(53765476960)_(cropped).jpg
+- Lana Del Rey — `lana-del-rey-1.jpg` — Unknown authorUnknown author — Public domain — https://commons.wikimedia.org/wiki/File:Lana_Turner_1944_photo.jpg
+- Lana Del Rey — `lana-del-rey-2.jpg` — Georges Biard — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Lana_Del_Rey_Cannes_2012.jpg
+- Bon Iver — `bon-iver-0.jpg` — danieljordahl from Östersund, Sweden — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Bon_Iver@Stockholm.jpg
+- Bon Iver — `bon-iver-1.jpg` — kweez mcG from London, UK — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Bon_Iver2.jpg
+- Bon Iver — `bon-iver-2.jpg` — Moses — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Flickr_-_moses_namkung_-_Bon_Iver_3.jpg
+- Metallica — `metallica-0.jpg` — Library of Congress Life — CC0 — https://commons.wikimedia.org/wiki/File:Metallica_March_2024.jpg
+- Metallica — `metallica-1.jpg` — Mark Wainwright — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Metallica_Of_Wolf_and_Man_(cropped).jpg
+- Metallica — `metallica-2.jpg` — Alberto Cabello — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Lars_Ulrich_(Metallica).jpg
+- Iron Maiden — `iron-maiden-0.jpg` — File:Steve Harris 521.jpg: adels
+File:Davemurray.jpg: adels
+File:Adrian Smith Ir — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:IronMaidencollage2.jpg
+- Black Sabbath — `black-sabbath-0.jpg` — Warner Bros. Records — Public domain — https://commons.wikimedia.org/wiki/File:Sabs.jpg
+- Black Sabbath — `black-sabbath-2.jpg` — Vertigo Records — Public domain — https://commons.wikimedia.org/wiki/File:Black_Sabbath_(1970).jpg
+- Slipknot — `slipknot-0.jpg` — Hadron137 — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:SlipKnot.jpg
+- System of a Down — `system-of-a-down-0.jpg` — Californipedia — CC0 — https://commons.wikimedia.org/wiki/File:System_of_a_Down_live_in_Mexico_2026.jpg
+- Tool — `tool-0.jpg` — Lugnuts — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Tool_live_Birmingham_2022.jpg
+- Tool — `tool-1.jpg` — https://www.flickr.com/photos/lukaszr/ (uploaded by Andrey Molokovich) — CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Tool_live_2006.jpg
+- Tool — `tool-2.jpg` — 350z33 — CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:ToolWelcometoRockville2023.jpg
+- Rammstein — `rammstein-0.jpg` — Jonas Rogowski — CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Rammstein_at_Wacken_Open_Air_2013_06.jpg
+- Rammstein — `rammstein-1.jpg` — https://www.flickr.com/photos/baro/ — CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Rammstein%26Apocalyptica.jpg

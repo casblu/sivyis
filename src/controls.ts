@@ -16,7 +16,7 @@ const ZOOM_MIN_ORIGIN = 1.2
 const ZOOM_MAX_ORIGIN = 320
 const DOLLY_NEAR_STAR = 7
 const TAP_MOVE_PX = 12
-const TAP_MAX_MS = 280
+const TAP_MAX_MS = 650
 const DOUBLE_TAP_MS = 320
 const DOUBLE_TAP_PX = 36
 
@@ -33,6 +33,7 @@ export type TapResult = {
   kind: 'tap' | 'doubletap'
   x: number
   y: number
+  pointerType?: string
 }
 
 type FlightKind = 'zoom' | 'flyto' | 'lookat' | 'overview'
@@ -623,10 +624,10 @@ export class FlyControls {
           now - this.lastTapAt < DOUBLE_TAP_MS &&
           Math.hypot(e.clientX - this.lastTapX, e.clientY - this.lastTapY) < DOUBLE_TAP_PX
         if (nearPrev) {
-          this.onTap?.({ kind: 'doubletap', x: e.clientX, y: e.clientY })
+          this.onTap?.({ kind: 'doubletap', x: e.clientX, y: e.clientY, pointerType: e.pointerType })
           this.lastTapAt = 0
         } else {
-          this.onTap?.({ kind: 'tap', x: e.clientX, y: e.clientY })
+          this.onTap?.({ kind: 'tap', x: e.clientX, y: e.clientY, pointerType: e.pointerType })
           this.lastTapAt = now
           this.lastTapX = e.clientX
           this.lastTapY = e.clientY

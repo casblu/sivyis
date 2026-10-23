@@ -74,6 +74,7 @@ ui.onEnter = async () => {
 ui.onMute = (muted) => audio.setMuted(muted)
 ui.onClosePanel = () => {
   galaxy.setSelected(null)
+  galaxy.setViewShift(0, 0)
 }
 const realAudio = new Audio()
 realAudio.preload = 'none'
@@ -144,38 +145,47 @@ let pendingTap: ReturnType<typeof setTimeout> | null = null
 
 fly.onTap = (result) => {
   if (!running) return
-  ndc.set((result.x / window.innerWidth) * 2 - 1, -(result.y / window.innerHeight) * 2 + 1)
-  let artist = galaxy.pick(ndc)
+  // Mouse clicks are handled by the canvas 'click' listener.
+  if (!fly.isTouch && result.pointerType === 'mouse') return
+  const artist = pickAt(result.x, result.y, true)
 
   if (result.kind === 'doubletap') {
     if (pendingTap) {
       clearTimeout(pendingTap)
       pendingTap = null
     }
+    if (artist) {
+      // Double-tap on a star: keep the profile, just zoom in.
+      zoomTarget.set(...artist.position)
+      fly.zoomToward(zoomTarget)
+      return
+    }
     ui.hidePanel()
     galaxy.setSelected(null)
-    if (!artist) {
-      const near = galaxy.nearest(galaxy.camera.position)
-      artist = near?.artist ?? null
-    }
-    if (artist) {
-      zoomTarget.set(...artist.position)
+    const near = galaxy.nearest(galaxy.camera.position)
+    if (near) {
+      zoomTarget.set(...near.artist.position)
       fly.zoomToward(zoomTarget)
     }
     return
   }
 
-  if (pendingTap) clearTimeout(pendingTap)
-  const picked = artist
-  pendingTap = setTimeout(() => {
-    pendingTap = null
-    if (picked) openArtist(picked)
-  }, 340)
+  // Single tap on a star opens its profile immediately.
+  if (artist) openArtist(artist)
 }
 
+function pickAt(x: number, y: number, touch: boolean) {
+  ndc.set((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1)
+  return galaxy.pick(ndc) ?? galaxy.pickScreen(x, y, touch ? 46 : 26)
+}
+
+let downXY: [number, number, number] = [0, 0, 0]
+canvas.addEventListener('pointerdown', (e) => { downXY = [e.clientX, e.clientY, performance.now()] })
 canvas.addEventListener('click', (e) => {
   if (!running) return
   if (fly.isTouch) return
+  // Ignore the click that ends a drag (orbit/look) — only real clicks open a star.
+  if (!fly.pointerLocked && Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]) > 8) return
   if (suppressClick) {
     suppressClick = false
     return
@@ -219,15 +229,15 @@ window.addEventListener('keydown', (e) => {
 })
 
 function artistFromEvent(e: MouseEvent) {
-  if (fly.pointerLocked) ndc.set(0, 0)
-  else ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1)
-  return galaxy.pick(ndc)
+  if (fly.pointerLocked) return pickAt(window.innerWidth / 2, window.innerHeight / 2, false)
+  return pickAt(e.clientX, e.clientY, false)
 }
 
 function openArtist(artist: NonNullable<ReturnType<GalaxyScene['pick']>>): void {
   const profile = getArtistProfile(artist.id)
   galaxy.setSelected(profile.baseId)
   ui.openPanel(profile)
+  frameSelected(artist)
   if (fly.pointerLocked) {
     fly.unlock()
     suppressClick = true
@@ -238,6 +248,7 @@ function frame(): void {
   requestAnimationFrame(frame)
   const dt = galaxy.dt
   fly.update(dt)
+  if (!document.getElementById('panel')?.classList.contains('open')) galaxy.setViewShift(0, 0)
   galaxy.tickQuality(dt)
 
   const origin = galaxy.camera.position
@@ -322,3 +333,45 @@ if (new URLSearchParams(location.search).has('debug')) {
 
 // Debug hook for automated screenshots: add ?debug to the URL.
 if (location.search.includes('debug')) Object.assign(window, { __galaxy: galaxy, __fly: fly })
+
+/** Keep the selected star visible in the part of the screen not covered by the profile panel. */
+function panelShift(): [number, number] {
+  const panel = document.getElementById('panel')
+  if (!panel || !panel.classList.contains('open')) return [0, 0]
+  const r = panel.getBoundingClientRect()
+  const w = window.innerWidth
+  const h = window.innerHeight
+  if (r.width < w * 0.9) return [Math.round(Math.min(r.width, w - r.left) / 2), 0] // side panel: centre in left area
+  const covered = Math.max(0, h - Math.max(0, r.top))
+  return [0, Math.round(covered / 2)] // bottom sheet: centre in top area
+}
+
+function frameSelected(artist: { position: [number, number, number] }): void {
+  // Panel transitions in; measure on next frame using final geometry.
+  requestAnimationFrame(() => {
+    const panel = document.getElementById('panel')
+    const w = window.innerWidth
+    let sx = 0
+    let sy = 0
+    if (panel) {
+      const cs = getComputedStyle(panel)
+      const pw = panel.offsetWidth
+      const ph = panel.offsetHeight
+      if (pw < w * 0.9) sx = Math.round(pw / 2)
+      else sy = Math.round(ph / 2)
+      void cs
+    }
+    galaxy.setViewShift(sx, sy)
+    tmpArtistPos.set(...artist.position)
+    const d = galaxy.camera.position.distanceTo(tmpArtistPos)
+    if (d > 22 || d < 3) fly.flyToArtist(tmpArtistPos.clone())
+    else fly.lookAtArtist(tmpArtistPos.clone())
+  })
+}
+void panelShift
+window.addEventListener('resize', () => {
+  if (document.getElementById('panel')?.classList.contains('open')) {
+    const [x, y] = panelShift()
+    galaxy.setViewShift(x, y)
+  }
+})

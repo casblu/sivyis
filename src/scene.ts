@@ -490,6 +490,82 @@ export class GalaxyScene {
       }
     }
     this.lightning?.update(dt)
+    this.updateSelRing()
+    this.updateViewShift(dt)
+  }
+
+  private selRing: THREE.Mesh | null = null
+  private viewShift = { x: 0, y: 0, tx: 0, ty: 0 }
+
+  /** Shift the projection so the scene centre sits in the area not covered by a panel (px). */
+  setViewShift(x: number, y: number): void {
+    this.viewShift.tx = x
+    this.viewShift.ty = y
+  }
+
+  private updateViewShift(dt: number): void {
+    const v = this.viewShift
+    const k = 1 - Math.exp(-dt * 6)
+    v.x += (v.tx - v.x) * k
+    v.y += (v.ty - v.y) * k
+    if (Math.abs(v.x - v.tx) < 0.3) v.x = v.tx
+    if (Math.abs(v.y - v.ty) < 0.3) v.y = v.ty
+    const w = Math.max(1, window.innerWidth)
+    const h = Math.max(1, window.innerHeight)
+    if (v.x === 0 && v.y === 0) {
+      if (this.camera.view?.enabled) this.camera.clearViewOffset()
+    } else {
+      this.camera.setViewOffset(w, h, v.x, v.y, w, h)
+    }
+  }
+
+  private updateSelRing(): void {
+    if (!this.selRing) {
+      const geo = new THREE.RingGeometry(1, 1.08, 96)
+      const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide })
+      this.selRing = new THREE.Mesh(geo, mat)
+      this.selRing.renderOrder = 10
+      this.scene.add(this.selRing)
+    }
+    const ring = this.selRing
+    const sel = this.selectedId ? this.starById.get(this.selectedId) : null
+    if (!sel) {
+      ring.visible = false
+      return
+    }
+    ring.visible = true
+    ring.position.copy(sel.group.position)
+    ring.quaternion.copy(this.camera.quaternion)
+    const d = this.camera.position.distanceTo(sel.group.position)
+    const t = performance.now() / 1000
+    ring.scale.setScalar(Math.max(1.6, d * 0.075) * (1 + Math.sin(t * 2.4) * 0.04))
+    const mat = ring.material as THREE.MeshBasicMaterial
+    mat.color.setHex(sel.artist.color)
+    mat.opacity = 0.55 + Math.sin(t * 2.4) * 0.15
+  }
+
+  /** Screen-space pick: nearest visible star within radiusPx of (x,y). */
+  pickScreen(x: number, y: number, radiusPx: number): Artist | null {
+    const w = window.innerWidth
+    const h = window.innerHeight
+    const v = new THREE.Vector3()
+    let best: Artist | null = null
+    let bestScore = Infinity
+    for (const star of this.stars) {
+      if (!star.group.visible || star.vis < 0.35) continue
+      v.copy(star.group.position).project(this.camera)
+      if (v.z < -1 || v.z > 1) continue
+      const sx = (v.x * 0.5 + 0.5) * w
+      const sy = (-v.y * 0.5 + 0.5) * h
+      const d = Math.hypot(sx - x, sy - y)
+      if (d > radiusPx) continue
+      const score = d + v.z * 4
+      if (score < bestScore) {
+        bestScore = score
+        best = star.artist
+      }
+    }
+    return best
   }
 
   setSelected(id: string | null): void {
@@ -603,6 +679,7 @@ export class GalaxyScene {
         v = x * x * (3 - 2 * x)
         this.genreVis.set(star.artist.genreId, v)
       }
+      if (this.selectedId && (star.artist.baseId === this.selectedId || star.artist.id === this.selectedId)) v = 1
       star.vis = v
       star.group.visible = v > 0.005
     }
