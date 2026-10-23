@@ -1,8 +1,8 @@
 import { playScreenZap } from './screenZap'
+import { ARTISTS } from "./artists.ts"
 import './style.css'
 import * as THREE from 'three'
 import {
-  ARTISTS,
   GENRES,
   GENRE_LABEL_RADIUS,
   HEARING_RADIUS,
@@ -75,8 +75,18 @@ ui.onMute = (muted) => audio.setMuted(muted)
 ui.onClosePanel = () => {
   galaxy.setSelected(null)
 }
+const realAudio = new Audio()
+realAudio.preload = 'none'
 ui.onSelectTrack = (artist, index) => {
   void audio.start()
+  const t = artist.tracks[index]
+  if (t?.audioUrl) {
+    audio.stopAll()
+    realAudio.src = t.audioUrl
+    void realAudio.play().catch(() => {})
+    return
+  }
+  realAudio.pause()
   audio.playTrackCue(artist, index)
 }
 
@@ -97,6 +107,12 @@ ui.onLookAt = (artist) => {
   ui.fadeGestureHint()
 }
 
+ui.onSendBtc = (artist) => {
+  galaxy.zapArtist(artist.id)
+  playScreenZap({ color: artist.color, name: artist.name })
+}
+;(window as unknown as { __sivyis?: unknown }).__sivyis = { galaxy, fly, zap: (id: string) => galaxy.zapArtist(id), open: (id: string) => { const a = ARTISTS.find((x) => x.id === id); if (a) openArtist(a) } }
+
 ui.onFlyTo = (artist) => {
   if (!running) return
   tmpArtistPos.set(...artist.position)
@@ -106,12 +122,6 @@ ui.onFlyTo = (artist) => {
   galaxy.setSelected(artist.id)
   ui.fadeGestureHint()
 }
-
-ui.onSendBtc = (artist) => {
-  galaxy.zapArtist(artist.id)
-  playScreenZap({ color: artist.color, name: artist.name })
-}
-;(window as unknown as { __sivyis?: unknown }).__sivyis = { galaxy, fly, zap: (id: string) => galaxy.zapArtist(id), open: (id: string) => { const a = ARTISTS.find((x) => x.id === id); if (a) openArtist(a) } }
 
 ui.onTabChange = (tab) => {
   if (tab !== 'galaxy') {
@@ -304,3 +314,11 @@ function frame(): void {
 }
 
 frame()
+
+// Opt-in test hook (?debug) for headless visual checks; inert otherwise.
+if (new URLSearchParams(location.search).has('debug')) {
+  ;(window as unknown as Record<string, unknown>).__cosmoly = { galaxy, fly }
+}
+
+// Debug hook for automated screenshots: add ?debug to the URL.
+if (location.search.includes('debug')) Object.assign(window, { __galaxy: galaxy, __fly: fly })

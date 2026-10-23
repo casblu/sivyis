@@ -1,3 +1,5 @@
+import openCatalog from './openCatalog.json'
+import { MEMORIALS, type Memorial } from './memorials.ts'
 import {
   GENRE_BALL_RADIUS,
   GENRE_CLUSTER_RADIUS,
@@ -12,9 +14,43 @@ import {
 
 export { GENRE_BALL_RADIUS, START_INSIDE_POS, START_LOOK_AT } from './genreBall.ts'
 
+export type CatalogSource = 'rss' | 'nostr'
+
 export type Track = {
   title: string
   duration: string
+  /** Real playable audio (open catalog only) */
+  audioUrl?: string
+  source?: CatalogSource
+  album?: string
+}
+
+export type ValueRecipient = {
+  name: string
+  type: string
+  address: string
+  split: number
+  customKey?: string
+  customValue?: string
+  fee?: boolean
+}
+
+/** Pay targets only — Cosmoly does not move money here. */
+export type PayInfo = {
+  /** Podcasting 2.0 podcast:value block (streaming sats / boosts, keysend splits) */
+  valueSplits: { type: string; method: string; recipients: ValueRecipient[] } | null
+  /** Lightning address for NIP-57 zaps (from Nostr kind 0) */
+  lud16: string | null
+  nostrPubkey: string | null
+  zapSplits: { pubkey: string; relay?: string; weight: number }[]
+}
+
+export type OpenInfo = {
+  sources: CatalogSource[]
+  image: string
+  links: { label: string; url: string }[]
+  pay: PayInfo
+  genreTags: string[]
 }
 
 export type AudioPreset = {
@@ -90,6 +126,10 @@ export type Artist = {
   offset: [number, number, number]
   position: [number, number, number]
   audio: AudioPreset
+  /** Present for artists loaded from the open V4V RSS / Nostr catalog */
+  open?: OpenInfo
+  /** Set when the artist has died — renders as a memorial star (see memorials.ts) */
+  memorial?: Memorial
 }
 
 const PENT = [0, 3, 5, 7, 10]
@@ -278,6 +318,7 @@ type ArtistSeed = {
   tracks: Track[]
   offset: [number, number, number]
   size?: number
+  open?: OpenInfo
 }
 
 function slug(name: string): string {
@@ -1516,6 +1557,8 @@ function placeAtSubgenre(
     offset: seed.offset,
     position: [x, y, z],
     audio: { ...sub.audio },
+    open: seed.open,
+    memorial: MEMORIALS[seed.id],
   }
 }
 
@@ -1546,7 +1589,45 @@ function expandSeeds(list: ArtistSeed[]): Artist[] {
   return out
 }
 
-export const ARTISTS: Artist[] = expandSeeds(seeds as ArtistSeed[])
+type OpenCatalogArtist = {
+  id: string
+  name: string
+  sources: CatalogSource[]
+  genreId: GenreId
+  subgenreId: string
+  genreTags: string[]
+  bio: string
+  image: string
+  links: { label: string; url: string }[]
+  pay: PayInfo
+  tracks: Track[]
+  offset: [number, number, number]
+}
+
+export const OPEN_CATALOG_STATS = (openCatalog as unknown as { stats: Record<string, unknown> }).stats
+
+function openSeeds(): ArtistSeed[] {
+  const taken = new Set(seeds.map((s) => s.name.toLowerCase().replace(/[^a-z0-9]+/g, '')))
+  const out: ArtistSeed[] = []
+  for (const a of (openCatalog as unknown as { artists: OpenCatalogArtist[] }).artists) {
+    if (!SUBGENRE_BY_ID[a.subgenreId]) continue
+    if (taken.has(a.name.toLowerCase().replace(/[^a-z0-9]+/g, ''))) continue // dedupe vs built-in sample artists
+    out.push({
+      id: a.id,
+      name: a.name,
+      genreId: a.genreId,
+      subgenreId: a.subgenreId,
+      bio: a.bio,
+      tracks: a.tracks,
+      offset: a.offset,
+      size: 0.75,
+      open: { sources: a.sources, image: a.image, links: a.links, pay: a.pay, genreTags: a.genreTags },
+    })
+  }
+  return out
+}
+
+export const ARTISTS: Artist[] = expandSeeds([...(seeds as ArtistSeed[]), ...openSeeds()])
 
 /** Unique profiles (primary instances only). */
 export const ARTIST_PROFILES: Artist[] = ARTISTS.filter((a) => a.id === a.baseId)

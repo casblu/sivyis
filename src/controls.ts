@@ -96,6 +96,12 @@ export class FlyControls {
   private downY = 0
   private downAt = 0
   private moved = false
+  // Smoothed input: raw gestures accumulate here and are eased in per frame (no snapping).
+  private pendYaw = 0
+  private pendPitch = 0
+  private pendDolly = 0
+  private wishTmp = new THREE.Vector3()
+  private upTmp = new THREE.Vector3()
   private lastTapAt = 0
   private lastTapX = 0
   private lastTapY = 0
@@ -274,9 +280,11 @@ export class FlyControls {
     if (!this.enabled) return
 
     if (this.flight) {
+      this.pendYaw = this.pendPitch = this.pendDolly = 0
       this.updateFlight(dt)
       return
     }
+    this.applySmoothedInput(dt)
 
     if (this.navMode === 'overview') {
       this.updateOverview(dt)
@@ -285,10 +293,12 @@ export class FlyControls {
 
     // Look inertia (Earth-style momentum after one-finger drag)
     if (this.mode !== 'orbit' && (Math.abs(this.yawVel) > LOOK_INERTIA_STOP || Math.abs(this.pitchVel) > LOOK_INERTIA_STOP)) {
-      this.yaw += this.yawVel
-      this.pitch += this.pitchVel
-      this.yawVel *= LOOK_INERTIA
-      this.pitchVel *= LOOK_INERTIA
+      const k = Math.min(3, dt * 60)
+      this.yaw += this.yawVel * k
+      this.pitch += this.pitchVel * k
+      const decay = Math.pow(LOOK_INERTIA, k)
+      this.yawVel *= decay
+      this.pitchVel *= decay
       this.lookDirty = true
     } else if (this.mode !== 'orbit') {
       this.yawVel = 0
@@ -301,7 +311,7 @@ export class FlyControls {
     this.right.crossVectors(this.forward, this.up).normalize()
 
     const max = (this.boost ? BOOST_SPEED : BASE_SPEED) * this.speedScale
-    const wish = new THREE.Vector3()
+    const wish = this.wishTmp.set(0, 0, 0)
 
     if (this.keys.has('w') || this.keys.has('arrowup') || this.thrusting) {
       wish.add(this.forward)
@@ -537,10 +547,9 @@ export class FlyControls {
     if (!this.enabled) return
     if (!this.pointerLocked) return
     if (this.navMode !== 'fly') return
-    // INVERTED as currently shipped
-    this.yaw += e.movementX * LOOK_SENS
-    this.pitch += e.movementY * LOOK_SENS
-    this.lookDirty = true
+    // Desktop mouse look: reversed per Txai (Oct 2026)
+    this.pendYaw -= e.movementX * LOOK_SENS
+    this.pendPitch -= e.movementY * LOOK_SENS
   }
 
   private onWheel = (e: WheelEvent): void => {
@@ -659,7 +668,7 @@ export class FlyControls {
       if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
         this.camera.getWorldDirection(this.forward)
         this.right.crossVectors(this.forward, this.up).normalize()
-        const localUp = new THREE.Vector3().crossVectors(this.right, this.forward).normalize()
+        const localUp = this.upTmp.crossVectors(this.right, this.forward).normalize()
         this.camera.position.addScaledVector(this.right, -dx * TOUCH_PAN)
         this.camera.position.addScaledVector(localUp, dy * TOUCH_PAN)
         this.clampOriginDistance()
@@ -681,21 +690,41 @@ export class FlyControls {
     }
     if (!this.moved) return
 
-    // INVERTED yaw/pitch as currently shipped
-    const dYaw = dx * TOUCH_LOOK
-    const dPitch = dy * TOUCH_LOOK
-    this.yaw += dYaw
-    this.pitch += dPitch
-    this.yawVel = dYaw
-    this.pitchVel = dPitch
-    this.lookDirty = true
+    // Mouse drag is reversed vs touch (per Txai, Oct 2026); touch unchanged.
+    const inv = e.pointerType === 'mouse' ? -1 : 1
+    const dYaw = dx * TOUCH_LOOK * inv
+    const dPitch = dy * TOUCH_LOOK * inv
+    this.pendYaw += dYaw
+    this.pendPitch += dPitch
+    this.yawVel = dYaw * 0.6
+    this.pitchVel = dPitch * 0.6
+  }
 
-    if (this.navMode === 'overview') {
-      this.overviewUserSpin = this.yaw - this.overviewYaw
+  /** Ease accumulated look/dolly input in with frame-rate-independent damping. */
+  private applySmoothedInput(dt: number): void {
+    const a = 1 - Math.exp(-16 * dt)
+    if (Math.abs(this.pendYaw) > 1e-6 || Math.abs(this.pendPitch) > 1e-6) {
+      const dy = this.pendYaw * a
+      const dp = this.pendPitch * a
+      this.yaw += dy
+      this.pitch += dp
+      this.pendYaw -= dy
+      this.pendPitch -= dp
+      this.lookDirty = true
+      if (this.navMode === 'overview') this.overviewUserSpin = this.yaw - this.overviewYaw
+    }
+    if (Math.abs(this.pendDolly) > 1e-4) {
+      const step = this.pendDolly * (1 - Math.exp(-10 * dt))
+      this.pendDolly -= step
+      this.dollyNow(step)
     }
   }
 
   private dolly(amount: number): void {
+    this.pendDolly += amount
+  }
+
+  private dollyNow(amount: number): void {
     this.camera.getWorldDirection(this.forward)
     this.camera.position.addScaledVector(this.forward, amount)
     this.clampOriginDistance()
@@ -721,7 +750,9 @@ export class FlyControls {
 }
 
 function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+  // Smootherstep (C2-continuous): zero velocity AND acceleration at both ends — no jolt.
+  const x = Math.min(1, Math.max(0, t))
+  return x * x * x * (x * (x * 6 - 15) + 10)
 }
 
 function shortestYaw(from: number, to: number): number {

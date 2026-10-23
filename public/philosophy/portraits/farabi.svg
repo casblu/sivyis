@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" role="img" aria-labelledby="t">
+  <title id="t">al-Fārābī — placeholder</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#120a28"/><stop offset="100%" stop-color="#060412"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fb7185" stop-opacity="0.35"/><stop offset="100%" stop-color="#fb7185" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="400" rx="24" fill="url(#bg)"/>
+  <rect x="1" y="1" width="318" height="398" rx="23" fill="none" stroke="#fb7185" stroke-opacity="0.35" stroke-width="1.5"/>
+  <!-- shoulders -->
+  <ellipse cx="160" cy="360" rx="110" ry="70" fill="url(#skin)" opacity="0.55"/>
+  <!-- head -->
+  <ellipse cx="160" cy="160" rx="62" ry="74" fill="url(#skin)"/>
+  <!-- hair/cap abstract -->
+  <path d="M98 150 Q160 60 222 150" fill="none" stroke="#fb7185" stroke-width="10" stroke-linecap="round" opacity="0.7"/>
+  <!-- face suggestion -->
+  <circle cx="140" cy="155" r="4" fill="#0a0618" opacity="0.55"/>
+  <circle cx="180" cy="155" r="4" fill="#0a0618" opacity="0.55"/>
+  <path d="M145 190 Q160 200 175 190" fill="none" stroke="#0a0618" stroke-width="2.5" opacity="0.4" stroke-linecap="round"/>
+  <text x="160" y="300" text-anchor="middle" fill="#fb7185" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">al-Fārābī</text>
+  <text x="160" y="324" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Portrait pending license check</text>
+  <text x="160" y="380" text-anchor="middle" fill="#64748b" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Placeholder · not a photograph</text>
+</svg>

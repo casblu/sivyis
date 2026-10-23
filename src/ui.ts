@@ -14,6 +14,7 @@ import { philosophyPageHtml } from './philosophy.ts'
 import { mountPhilosophyWeb, type PhilosophyWebHandle } from './philosophyWeb.ts'
 import { mountMusicHistory, type MusicHistoryHandle } from './musicHistory.ts'
 import { formatBtc, wallet } from './wallet.ts'
+import { memorialYears } from './memorials.ts'
 
 export type AppTab = 'galaxy' | 'philosophy' | 'history' | 'profile'
 
@@ -26,7 +27,6 @@ export class UI {
   onToggleMode: (() => void) | null = null
   onLookAt: ((artist: Artist) => void) | null = null
   onFlyTo: ((artist: Artist) => void) | null = null
-  /** Fired after a successful BTC send to an artist. */
   onSendBtc: ((artist: Artist, amount: number) => void) | null = null
   /** Called when switching tabs; galaxy should pause pointer lock etc. */
   onTabChange: ((tab: AppTab) => void) | null = null
@@ -355,14 +355,18 @@ export class UI {
         <span class="n">${String(i + 1).padStart(2, '0')}</span>
         <span class="meta">
           <b>${escapeHtml(t.title)}</b>
-          <i>Demo cue · not the recording</i>
+          <i>${t.audioUrl ? `${t.source === 'nostr' ? 'Nostr' : 'V4V RSS'} · real recording${t.album ? ' · ' + escapeHtml(t.album) : ''}` : 'Demo cue · not the recording'}</i>
         </span>
         <span class="dur">${escapeHtml(t.duration)}</span>
       </button>`,
       )
       .join('')
 
-    const storeLinks = mockStoreLinks(artist)
+    const storeLinks = artist.open
+      ? artist.open.links
+          .map((l) => `<li><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.label)}</a></li>`)
+          .join('')
+      : mockStoreLinks(artist)
     const related = relatedArtists(artist)
 
     must(this.panel, '#panel-body').innerHTML = `
@@ -370,8 +374,10 @@ export class UI {
       <p class="kicker">${escapeHtml(artist.genre)} · ${escapeHtml(artist.subgenre)}</p>
       ${alsoInLine(artist)}
       <h2>${escapeHtml(artist.name)}</h2>
+      ${artist.memorial ? `<p class="memorial-line">✦ In memoriam · ${memorialYears(artist.memorial)}${artist.memorial.place ? ' · ' + escapeHtml(artist.memorial.place) : ''}</p>` : ''}
+      ${openBadges(artist)}
       <p class="bio">${escapeHtml(artist.bio)}</p>
-      <p class="demo-note">Audio is a royalty-safe procedural demo generated in your browser — not a copyrighted recording. Song titles are listed for reference only.</p>
+      ${artist.open ? openPayHtml(artist) : '<p class="demo-note">Audio is a royalty-safe procedural demo generated in your browser — not a copyrighted recording. Song titles are listed for reference only.</p>'}
 
       <div class="artist-wallet-card" id="artist-wallet-card">
         <div>
@@ -442,7 +448,7 @@ export class UI {
         status.classList.add('err')
         status.classList.remove('ok')
       }
-    }, 'Slide to send')
+    })
 
     must(this.panel, '#panel-body').querySelectorAll<HTMLButtonElement>('[data-related]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -808,7 +814,7 @@ function layout(): string {
       <p class="kicker">A SIVYIS Corp product · Music galaxy</p>
       <h1>Cosmoly</h1>
       <p>Fly through the stars to discover artists. Each star is selectable — open profiles for store, merch, related links, and demo Bitcoin tips. Study music philosophy in the tab below, and keep your demo wallet ready.</p>
-      <p class="demo-note">All audio is generated live with the Web Audio API. No copyrighted streaming — track titles are listed for reference only.</p>
+      <p class="demo-note">Sample stars play generated demo cues. Stars badged <b>RSS · V4V</b> or <b>Nostr</b> are real independent artists from the open Bitcoin music web, streamed from their own feeds and relays.</p>
       <button id="enter" type="button">Enter the galaxy</button>
       <ul class="gate-keys">
         <li><strong>Galaxy:</strong> fly freely · tap stars for profiles</li>
@@ -820,4 +826,32 @@ function layout(): string {
     </div>
   </div>
   `
+}
+
+function openBadges(artist: Artist): string {
+  if (!artist.open) return ''
+  const b = artist.open.sources
+    .map((s) => `<span class="src-badge src-${s}">${s === 'rss' ? 'RSS · V4V' : 'Nostr'}</span>`)
+    .join('')
+  const img = artist.open.image
+    ? `<img class="open-avatar" src="${escapeHtml(artist.open.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+    : ''
+  return `<div class="open-head">${img}<div class="src-badges">${b}</div></div>`
+}
+
+function openPayHtml(artist: Artist): string {
+  const pay = artist.open!.pay
+  const rows: string[] = []
+  if (pay.valueSplits) {
+    const r = pay.valueSplits.recipients
+      .map((x) => `<li><b>${x.split}%</b> ${escapeHtml(x.name || x.type)} <code>${escapeHtml(x.address.slice(0, 18))}…</code></li>`)
+      .join('')
+    rows.push(`<p class="kicker">Streaming sats / boosts (${escapeHtml(pay.valueSplits.method)} splits)</p><ul class="pay-list">${r}</ul>`)
+  }
+  if (pay.lud16) rows.push(`<p class="kicker">Zap (NIP-57) Lightning address</p><p class="pay-target"><code>${escapeHtml(pay.lud16)}</code></p>`)
+  else if (pay.nostrPubkey) rows.push(`<p class="kicker">Zap</p><p class="pay-target">No Lightning address on this Nostr profile yet.</p>`)
+  if (pay.zapSplits.length) rows.push(`<p class="pay-target">Track zap split: ${pay.zapSplits.length} recipient(s)</p>`)
+  return `<div class="open-pay" data-zap-hook="cosmoly-zaps" data-lud16="${escapeHtml(pay.lud16 || '')}" data-pubkey="${escapeHtml(pay.nostrPubkey || '')}">
+    <h3>Pay the artist</h3>${rows.join('') || '<p class="pay-target">No payment info published.</p>'}
+    <p class="demo-note">Pay targets shown for reference — payments are not live yet. Real recordings stream from the artist's own feed/relay.</p></div>`
 }

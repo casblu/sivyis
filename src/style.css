@@ -1666,6 +1666,19 @@ kbd {
 .hist-phil-links { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
 .hist-phil-links .kicker { margin-right: 4px; }
 
+
+/* Open catalog (V4V RSS + Nostr) */
+.open-head { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.open-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,.2); }
+.src-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.src-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; letter-spacing: .03em; }
+.src-rss { background: rgba(255,153,0,.18); color: #ffb347; border: 1px solid rgba(255,153,0,.5); }
+.src-nostr { background: rgba(160,90,255,.18); color: #c9a0ff; border: 1px solid rgba(160,90,255,.5); }
+.open-pay { margin: 10px 0; padding: 10px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+.open-pay code { font-size: 11px; word-break: break-all; }
+.pay-list { list-style: none; padding: 0; margin: 4px 0 8px; font-size: 12px; }
+.pay-target { font-size: 12px; margin: 2px 0 8px; }
+.memorial-line { margin: 2px 0 8px; font-size: 13px; letter-spacing: .04em; color: #ffe7b0; text-shadow: 0 0 10px rgba(255,215,140,.6); }
 .slide-confirm{position:relative;height:56px;border-radius:999px;margin-top:10px;background:rgba(247,147,26,.12);border:1px solid color-mix(in srgb,var(--btc) 50%,var(--line));overflow:hidden;user-select:none;touch-action:none;outline:none}
 .slide-confirm:focus-visible{box-shadow:0 0 0 2px #9fd8ff}
 .slide-fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,rgba(120,180,255,.15),rgba(160,215,255,.55));box-shadow:0 0 18px rgba(140,200,255,.6)}

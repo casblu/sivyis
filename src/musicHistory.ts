@@ -648,7 +648,7 @@ export function musicHistoryPageHtml(): string {
   return `
   <div class="hist-root">
     <header class="hist-hero">
-      <p class="kicker">SIVYIS Corp · Chronology</p>
+      <p class="kicker">Cosmoly · SIVYIS Corp · Chronology</p>
       <h1>Music History</h1>
       <p class="phil-lead">Scrub eras to hear how sound, power, and media shifted — narrative, philosophy of the time,
         artists, and documented releases &amp; news. Distinct from Philosophy (theory web): this is the timeline story.</p>

@@ -6,7 +6,7 @@ Genre mapping:
   hiphop      -> bubble.jpg     NASA GSFC_20171208_Archive_e002039  Hubble Bubbles And Baby Stars
   pop         -> lagoon.jpg     NASA GSFC_20171208_Archive_e001955  Hubble Lagoon Nebula
   rock        -> orion.jpg      NASA PIA01322                       Chaos at the Heart of Orion
-  rnb         -> trifid.jpg     NASA PIA07226                       Trifid Nebula (Spitzer/Hubble)
+  rnb         -> trifid.jpg     NASA PIA17834                       Trifid Nebula (Spitzer/Hubble)
   electronic  -> helix.jpg      NASA PIA18164                       Helix Nebula
   jazz        -> crab.jpg       NASA PIA03606                       Crab Nebula
   latin       -> horsehead.jpg  NASA PIA16008                       Horsehead Nebula (Hubble)
