@@ -130,6 +130,8 @@ export type Artist = {
   open?: OpenInfo
   /** Set when the artist has died — renders as a memorial star (see memorials.ts) */
   memorial?: Memorial
+  /** Artist privacy setting: show wallet balance publicly. Default false (future: chosen at sign-up). */
+  showBalance: boolean
   /** Life-cycle stage: protostar = newly signed-up artist, star = active, dead = deceased. */
   stage: ArtistStage
   deceased: boolean
@@ -1571,6 +1573,7 @@ function placeAtSubgenre(
     audio: { ...sub.audio },
     open: seed.open,
     memorial: MEMORIALS[seed.id],
+    showBalance: false,
     deceased: !!MEMORIALS[seed.id],
     deathYear: MEMORIALS[seed.id] ? Number(MEMORIALS[seed.id].diedOn.slice(0, 4)) : undefined,
     isNew: DEMO_NEW_ARTIST_IDS.has(seed.id),

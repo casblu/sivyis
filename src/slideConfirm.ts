@@ -1,5 +1,5 @@
 /** Hold-and-slide-to-confirm control. Calls onConfirm once the thumb passes the threshold. */
-export function mountSlideConfirm(host: HTMLElement, onConfirm: () => void, label = 'Slide to send'): void {
+export function mountSlideConfirm(host: HTMLElement, onConfirm: () => void, label = 'Slide to send', once = false): void {
   host.innerHTML = `
     <div class="slide-confirm" role="slider" tabindex="0" aria-label="${label}. Hold Enter or press Right Arrow repeatedly to confirm"
          aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -28,7 +28,9 @@ export function mountSlideConfirm(host: HTMLElement, onConfirm: () => void, labe
     set(max(), true)
     track.classList.add('confirmed')
     try { navigator.vibrate?.([30, 40, 60]) } catch { /* ignore */ }
+    track.setAttribute('aria-disabled', 'true')
     onConfirm()
+    if (once) return // single-use: caller replaces the slider with a receipt
     setTimeout(() => { done = false; track.classList.remove('confirmed'); set(0, true) }, 1400)
   }
   const release = () => {

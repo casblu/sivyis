@@ -1740,3 +1740,19 @@ kbd {
 #panel.open { transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1), opacity 0.8s cubic-bezier(0.33,1,0.68,1) !important; }
 #panel.open.zapping { opacity: 0.06; transition: opacity 0.22s ease-out !important; }
 .screen-zap { will-change: opacity; }
+
+/* —— Send section: close, receipt, recent zaps, history —— */
+.send-head { display: flex; align-items: center; justify-content: space-between; }
+.send-close { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.4); color: #fff; font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.send-receipt { display: flex; gap: 14px; align-items: center; padding: 14px 16px; margin: 8px 0; border-radius: 16px; border: 1px solid rgba(247,147,26,0.5); background: rgba(247,147,26,0.1); }
+.receipt-bolt { font-size: 2rem; filter: drop-shadow(0 0 8px #f7931a); }
+.send-receipt strong { display: block; font-size: 1.35rem; color: #f7a83a; }
+.send-receipt small { opacity: 0.8; }
+.send-recent { margin-top: 12px; }
+.send-recent .tx-list { margin: 6px 0; }
+.link-btn { background: none; border: 0; color: var(--accent-2, #8cf); padding: 8px 0; min-height: 40px; cursor: pointer; font: inherit; }
+.bal-private { font-size: 0.95rem; color: #f7a83a; }
+#tx-history { position: fixed; inset: 0; z-index: 80; background: #0b0b1e; overflow: auto; padding: calc(14px + var(--safe-top, 0px)) 18px calc(24px + var(--safe-bottom, 0px)); }
+.txh-head { display: flex; align-items: center; justify-content: space-between; }
+.txh-head h2 { margin: 0; }
+.tx-list li { display: flex; justify-content: space-between; gap: 10px; }

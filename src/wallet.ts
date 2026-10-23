@@ -128,6 +128,16 @@ export class DemoWallet {
     return { ok: true }
   }
 
+  /** User's sends to one artist, newest first. */
+  txsToArtist(artistId: string, limit = 5): WalletTx[] {
+    return this.state.txs.filter((t) => t.kind !== 'fund' && t.toId === artistId).slice(0, limit)
+  }
+
+  /** Full demo history, newest first. */
+  allTxs(): WalletTx[] {
+    return [...this.state.txs].sort((a, b) => b.at - a.at)
+  }
+
   private pushTx( partial: Omit<WalletTx, 'id' | 'at'>): void {
     this.state.txs.unshift({
       id: `tx_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -139,6 +149,18 @@ export class DemoWallet {
 }
 
 export const wallet = new DemoWallet()
+
+export function formatSats(btc: number): string {
+  return `${Math.round(btc * 1e8).toLocaleString('en-US')} sats`
+}
+
+export function timeAgo(at: number, now = Date.now()): string {
+  const s = Math.max(0, Math.round((now - at) / 1000))
+  if (s < 45) return 'just now'
+  const m = Math.round(s / 60); if (m < 60) return `${m} min ago`
+  const h = Math.round(m / 60); if (h < 24) return `${h} h ago`
+  const d = Math.round(h / 24); return `${d} d ago`
+}
 
 export function formatBtc(n: number): string {
   return `${n.toFixed(6)} BTC`

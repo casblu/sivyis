@@ -13,7 +13,7 @@ import type { NavMode } from './controls.ts'
 import { philosophyPageHtml } from './philosophy.ts'
 import { mountPhilosophyWeb, type PhilosophyWebHandle } from './philosophyWeb.ts'
 import { mountMusicHistory, type MusicHistoryHandle } from './musicHistory.ts'
-import { formatBtc, wallet } from './wallet.ts'
+import { formatBtc, formatSats, timeAgo, wallet, type WalletTx } from './wallet.ts'
 import { memorialYears } from './memorials.ts'
 import artistPhotos from './artistPhotos.json'
 
@@ -412,26 +412,13 @@ export class UI {
 
       <div class="artist-wallet-card" id="artist-wallet-card">
         <div>
-          <span class="kicker">Artist wallet (demo)</span>
-          <strong id="artist-btc-bal">${formatBtc(wallet.artistBalance(artist.id))}</strong>
+          <span class="kicker">Support ${escapeHtml(artist.name)}</span>
+          ${artist.showBalance ? `<strong id="artist-btc-bal">${formatBtc(wallet.artistBalance(artist.id))}</strong>` : '<strong class="bal-private">⚡ Zap with demo BTC</strong>'}
         </div>
         <button type="button" class="btc-send-btn" id="open-send-btc">Send BTC</button>
       </div>
 
-      <div class="send-btc-form hidden" id="send-btc-form">
-        <p class="kicker">Send Bitcoin · demo only</p>
-        <p class="send-hint">Your balance: <span id="send-user-bal">${formatBtc(wallet.userBalance)}</span></p>
-        <div class="send-row">
-          <input id="send-amount" type="number" inputmode="decimal" min="0.0001" step="0.001" value="0.001" aria-label="BTC amount" />
-          <select id="send-kind" aria-label="Payment type">
-            <option value="tip">Tip</option>
-            <option value="merch">Merch</option>
-            <option value="send">Payment</option>
-          </select>
-        </div>
-        <div id="confirm-send-btc"></div>
-        <p class="send-status" id="send-status" role="status"></p>
-      </div>
+      <div class="send-btc-form hidden" id="send-btc-form"></div>
 
       <h3>Store &amp; merch</h3>
       <ul class="link-list">${storeLinks}</ul>
@@ -475,27 +462,10 @@ export class UI {
 
     const form = must(this.panel, '#send-btc-form')
     must(this.panel, '#open-send-btc').addEventListener('click', () => {
-      form.classList.toggle('hidden')
-      this.refreshArtistWalletBits(artist)
-    })
-    mountSlideConfirm(must(this.panel, '#confirm-send-btc'), () => {
-      const amountEl = must(this.panel, '#send-amount') as HTMLInputElement
-      const kindEl = must(this.panel, '#send-kind') as HTMLSelectElement
-      const amount = Number(amountEl.value)
-      const kind = kindEl.value as 'tip' | 'merch' | 'send'
-      const result = wallet.sendToArtist(artist.id, artist.name, amount, kind)
-      const status = must(this.panel, '#send-status')
-      if (result.ok) {
-        status.textContent = `Sent ${formatBtc(amount)} (demo). Thanks for supporting ${artist.name}!`
-        status.classList.remove('err')
-        status.classList.add('ok')
-        this.refreshArtistWalletBits(artist)
-        this.onSendBtc?.(artist, amount)
-      } else {
-        status.textContent = result.error
-        status.classList.add('err')
-        status.classList.remove('ok')
-      }
+      // Always a fresh slider when (re)opening the send section.
+      this.renderSendSection(artist, form)
+      form.classList.remove('hidden')
+      form.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     })
 
     must(this.panel, '#panel-body').querySelectorAll<HTMLButtonElement>('[data-related]').forEach((btn) => {
@@ -527,9 +497,82 @@ export class UI {
     must(this.root, '#wallet-backdrop').classList.remove('open')
   }
 
+  private txRows(txs: WalletTx[], withArtist: boolean): string {
+    if (!txs.length) return '<p class="muted-line">No zaps yet.</p>'
+    return `<ul class="tx-list">${txs.map((t) => `<li><span>⚡ ${withArtist ? escapeHtml(t.note) + ' · ' : ''}${timeAgo(t.at)}</span><b>${t.kind === 'fund' ? '+' : '−'}${formatSats(t.amount)}</b></li>`).join('')}</ul>`
+  }
+
+  private renderSendSection(artist: Artist, form: HTMLElement): void {
+    let sending = false
+    form.innerHTML = `
+      <div class="send-head">
+        <p class="kicker">Send Bitcoin · demo only</p>
+        <button type="button" class="send-close" id="send-close" aria-label="Close send">×</button>
+      </div>
+      <div id="send-live">
+        <p class="send-hint">Your balance: <span id="send-user-bal">${formatBtc(wallet.userBalance)}</span></p>
+        <div class="send-row">
+          <input id="send-amount" type="number" inputmode="decimal" min="0.0001" step="0.001" value="0.001" aria-label="BTC amount" />
+          <select id="send-kind" aria-label="Payment type">
+            <option value="tip">Tip</option>
+            <option value="merch">Merch</option>
+            <option value="send">Payment</option>
+          </select>
+        </div>
+        <div id="confirm-send-btc"></div>
+      </div>
+      <p class="send-status" id="send-status" role="status"></p>
+      <div class="send-recent">
+        <p class="kicker">Your recent zaps to ${escapeHtml(artist.name)}</p>
+        <div id="send-recent-list">${this.txRows(wallet.txsToArtist(artist.id), false)}</div>
+        <button type="button" class="link-btn" id="view-all-tx">View all history →</button>
+      </div>`
+    must(form, '#send-close').addEventListener('click', () => { form.classList.add('hidden'); form.innerHTML = '' })
+    must(form, '#view-all-tx').addEventListener('click', () => this.openTxHistory())
+    mountSlideConfirm(must(form, '#confirm-send-btc'), () => {
+      if (sending) return
+      sending = true
+      const amount = Number((must(form, '#send-amount') as HTMLInputElement).value)
+      const kind = (must(form, '#send-kind') as HTMLSelectElement).value as 'tip' | 'merch' | 'send'
+      const result = wallet.sendToArtist(artist.id, artist.name, amount, kind)
+      const status = must(form, '#send-status')
+      if (result.ok) {
+        status.textContent = ''
+        // Replace the slider with a receipt; user must close & reopen to send again.
+        must(form, '#send-live').outerHTML = `
+          <div class="send-receipt" role="status">
+            <span class="receipt-bolt">⚡</span>
+            <div><strong>${formatBtc(amount)}</strong><small>${formatSats(amount)} sent to ${escapeHtml(artist.name)} (demo)</small></div>
+          </div>`
+        must(form, '#send-recent-list').innerHTML = this.txRows(wallet.txsToArtist(artist.id), false)
+        this.refreshArtistWalletBits(artist)
+        this.onSendBtc?.(artist, amount)
+      } else {
+        // fresh slider so the user can fix the amount and retry
+        this.renderSendSection(artist, form)
+        must(form, '#send-status').textContent = result.error
+        must(form, '#send-status').classList.add('err')
+      }
+    }, 'Slide to send', true)
+  }
+
+  openTxHistory(): void {
+    document.getElementById('tx-history')?.remove()
+    const el = document.createElement('div')
+    el.id = 'tx-history'
+    el.setAttribute('role', 'dialog')
+    el.setAttribute('aria-label', 'Transaction history')
+    el.innerHTML = `
+      <div class="txh-head"><h2>Transaction history</h2><button type="button" class="send-close" aria-label="Close history">×</button></div>
+      <p class="demo-badge">Demo wallet · newest first · saved on this device</p>
+      ${this.txRows(wallet.allTxs(), true)}`
+    el.querySelector('.send-close')!.addEventListener('click', () => el.remove())
+    document.body.appendChild(el)
+  }
+
   private refreshArtistWalletBits(artist: Artist): void {
     const bal = this.panel.querySelector('#artist-btc-bal')
-    if (bal) bal.textContent = formatBtc(wallet.artistBalance(artist.id))
+    if (bal && artist.showBalance) bal.textContent = formatBtc(wallet.artistBalance(artist.id))
     const userBal = this.panel.querySelector('#send-user-bal')
     if (userBal) userBal.textContent = formatBtc(wallet.userBalance)
   }
