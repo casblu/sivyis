@@ -1756,3 +1756,7 @@ kbd {
 .txh-head { display: flex; align-items: center; justify-content: space-between; }
 .txh-head h2 { margin: 0; }
 .tx-list li { display: flex; justify-content: space-between; gap: 10px; }
+
+.sats { white-space: nowrap; display: inline-flex; align-items: baseline; }
+.sats-icon { width: 0.62em; height: 1em; margin-right: 0.08em; vertical-align: -0.12em; align-self: center; }
+.wallet-sats { margin: -4px 0 10px; color: #f7a83a; font-size: 1.05rem; }

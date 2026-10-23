@@ -510,7 +510,7 @@ export class UI {
         <button type="button" class="send-close" id="send-close" aria-label="Close send">×</button>
       </div>
       <div id="send-live">
-        <p class="send-hint">Your balance: <span id="send-user-bal">${formatBtc(wallet.userBalance)}</span></p>
+        <p class="send-hint">Your balance: <span id="send-user-bal">${formatBtc(wallet.userBalance)}</span> · ${formatSats(wallet.userBalance)}</p>
         <div class="send-row">
           <input id="send-amount" type="number" inputmode="decimal" min="0.0001" step="0.001" value="0.001" aria-label="BTC amount" />
           <select id="send-kind" aria-label="Payment type">
@@ -586,14 +586,14 @@ export class UI {
         : `<ul class="tx-list">${txs
             .map(
               (t) =>
-                `<li><span>${escapeHtml(t.note)}</span><b>${t.kind === 'fund' ? '+' : '−'}${t.amount.toFixed(6)}</b></li>`,
+                `<li><span>${escapeHtml(t.note)}</span><b>${t.kind === 'fund' ? '+' : '−'}${formatSats(t.amount)}</b></li>`,
             )
             .join('')}</ul>`
 
     body.innerHTML = `
       <p class="demo-badge">Demo wallet · no real Bitcoin · localStorage only</p>
       <p class="kicker">Your balance</p>
-      <p class="wallet-balance" id="user-btc-display">${formatBtc(wallet.userBalance)}</p>
+      <p class="wallet-balance" id="user-btc-display">${formatBtc(wallet.userBalance)}</p><p class="wallet-sats">${formatSats(wallet.userBalance)}</p>
       <div class="fund-row">
         <input id="fund-amount" type="number" inputmode="decimal" min="0.001" step="0.01" value="0.01" aria-label="Fund amount" />
         <button type="button" id="fund-btc" class="btc-confirm">Fund (mock)</button>

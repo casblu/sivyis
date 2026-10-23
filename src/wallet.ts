@@ -150,8 +150,15 @@ export class DemoWallet {
 
 export const wallet = new DemoWallet()
 
+/** Community Satoshi symbol (3 horizontal bars + vertical stroke). Inline SVG, currentColor, scales with text. */
+export function satsIcon(): string {
+  return '<svg class="sats-icon" viewBox="0 0 12 18" aria-hidden="true" focusable="false"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="square" fill="none"><path d="M6 1v2.2M6 14.8V17M1.5 5.6h9M1.5 9h9M1.5 12.4h9"/></g></svg>'
+}
+
+/** HTML: [sats symbol]100,000 (aria-label "N sats"). */
 export function formatSats(btc: number): string {
-  return `${Math.round(btc * 1e8).toLocaleString('en-US')} sats`
+  const n = Math.round(btc * 1e8).toLocaleString('en-US')
+  return `<span class="sats" role="text" aria-label="${n} sats">${satsIcon()}${n}</span>`
 }
 
 export function timeAgo(at: number, now = Date.now()): string {
