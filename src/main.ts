@@ -1,4 +1,4 @@
-import { playScreenZap } from './screenZap'
+import { playScreenZap, ZAP_HOLD_MS, ZAP_FADE_MS } from './screenZap'
 import { ARTISTS } from "./artists.ts"
 import './style.css'
 import * as THREE from 'three'
@@ -114,8 +114,11 @@ ui.onSendBtc = (artist) => {
   galaxy.setViewShift(0, 0)
   tmpArtistPos.set(...artist.position)
   fly.lookAtArtist(tmpArtistPos.clone())
+  galaxy.setLite(true)
   panel?.classList.add('zapping')
-  window.setTimeout(() => panel?.classList.remove('zapping'), 1900)
+  // Profile fades back in (CSS opacity, ease-out cubic) at the same time the lightning fades out.
+  window.setTimeout(() => { panel?.classList.add('settling'); panel?.classList.remove('zapping') }, ZAP_HOLD_MS)
+  window.setTimeout(() => { panel?.classList.remove('settling'); galaxy.setLite(false) }, ZAP_HOLD_MS + ZAP_FADE_MS + 100)
   galaxy.zapArtist(artist.id)
   playScreenZap({ color: artist.color, name: artist.name })
 }
@@ -328,6 +331,9 @@ function frame(): void {
     }
   }
 
+  // Full-screen opaque profile covers the galaxy: skip WebGL work unless a zap is showing it.
+  const pnl = document.getElementById('panel')
+  if (pnl?.classList.contains('open') && !pnl.classList.contains('zapping') && !pnl.classList.contains('settling')) return
   galaxy.render(performance.now() * 0.001)
 }
 

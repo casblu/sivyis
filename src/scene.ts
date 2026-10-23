@@ -417,6 +417,7 @@ export class GalaxyScene {
   /** Max device pixel ratio by quality tier — never leave retina phones at 1x on HD. */
   private pixelRatioForQuality(q: QualityTier): number {
     const dpr = window.devicePixelRatio || 1
+    if (this.lite) return Math.min(dpr, 1)
     // Was capped at 2 (looked soft on retina). HD tier now allows up to 3.
     if (q >= 2) return Math.min(dpr, 2)
     if (q === 1) return Math.min(dpr, 1.5)
@@ -434,6 +435,14 @@ export class GalaxyScene {
     this.camera.updateProjectionMatrix()
     this.composer.setPixelRatio(pr)
     this.composer.setSize(w, h)
+  }
+
+  private lite = false
+  /** Cheap render (1x pixel ratio) while a zap overlay is on screen. */
+  setLite(on: boolean): void {
+    if (this.lite === on) return
+    this.lite = on
+    this.syncResolution()
   }
 
   get dt(): number {
@@ -741,6 +750,7 @@ export class GalaxyScene {
 
   /** Call once per frame with real dt to adapt quality on phones. */
   tickQuality(dt: number): void {
+    if (this.lite) return
     if (dt <= 0 || dt > 0.2) return
     const fps = 1 / dt
     this.fpsEma = this.fpsEma * 0.92 + fps * 0.08

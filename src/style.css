@@ -1735,6 +1735,8 @@ kbd {
   background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.25); color: #fff;
 }
 #panel #panel-body { max-width: 720px; margin: 0 auto; }
-#panel.zapping { background: rgba(4,4,14,0.08) !important; }
-#panel.zapping > * { opacity: 0.06; transition: opacity 0.25s ease; }
-#panel > * { transition: opacity 0.45s ease; }
+/* Zap: animate ONLY the panel's opacity (compositor). Fast out, ease-out-cubic back in. */
+#panel { will-change: transform, opacity; contain: layout paint; }
+#panel.open { transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1), opacity 0.8s cubic-bezier(0.33,1,0.68,1) !important; }
+#panel.open.zapping { opacity: 0.06; transition: opacity 0.22s ease-out !important; }
+.screen-zap { will-change: opacity; }
