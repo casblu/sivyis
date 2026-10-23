@@ -2,7 +2,10 @@
 
 const STORAGE_KEY = 'sivyis-demo-wallet-v1'
 const USER_ID = 'user'
-const DEFAULT_USER_BTC = 0.042
+/** Demo (pretend) starting balance: 1.5 BTC = 150,000,000 sats */
+const DEFAULT_USER_BTC = 1.5
+/** One-time top-up of existing saved wallets to DEFAULT_USER_BTC */
+const TOPUP_KEY = 'sivyis-demo-wallet-topup-v2'
 const DEFAULT_ARTIST_BTC = 0.008
 
 export type TxKind = 'fund' | 'send' | 'tip' | 'merch'
@@ -27,11 +30,19 @@ function load(): WalletState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as WalletState
-      if (parsed?.balances && typeof parsed.balances[USER_ID] === 'number') return parsed
+      if (parsed?.balances && typeof parsed.balances[USER_ID] === 'number') {
+        if (!localStorage.getItem(TOPUP_KEY)) {
+          parsed.balances[USER_ID] = Math.max(parsed.balances[USER_ID], DEFAULT_USER_BTC)
+          localStorage.setItem(TOPUP_KEY, '1')
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+        return parsed
+      }
     }
   } catch {
     /* ignore corrupt */
   }
+  try { localStorage.setItem(TOPUP_KEY, '1') } catch { /* private mode */ }
   return { balances: { [USER_ID]: DEFAULT_USER_BTC }, txs: [] }
 }
 
