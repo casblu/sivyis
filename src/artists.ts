@@ -23,6 +23,8 @@ export type Track = {
   audioUrl?: string
   source?: CatalogSource
   album?: string
+  /** Only show when a real source provides lyrics — never invent them */
+  lyrics?: string
 }
 
 export type ValueRecipient = {

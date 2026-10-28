@@ -881,6 +881,8 @@ function layout(): string {
   <section id="history-view" class="app-view hidden" aria-label="Music History"></section>
   <section id="profile-view" class="app-view hidden" aria-label="Profile"></section>
 
+  <div id="player-host"></div>
+
   <nav id="bottom-nav" aria-label="Main">
     <button type="button" data-tab="galaxy" class="active">
       <span class="nav-ico" aria-hidden="true">✦</span>

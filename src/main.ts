@@ -12,6 +12,7 @@ import { ProximityAudio } from './audio.ts'
 import { FlyControls } from './controls.ts'
 import { GalaxyScene } from './scene.ts'
 import { UI } from './ui.ts'
+import { MusicPlayer } from './player.ts'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) throw new Error('#app missing')
@@ -30,6 +31,8 @@ window.addEventListener(
     const profile = app.querySelector('#profile-view')
     const wallet = app.querySelector('#wallet-drawer')
     const nav = app.querySelector('#bottom-nav')
+    const playerBar = app.querySelector('#player-bar')
+    const playerLyrics = app.querySelector('#player-lyrics')
     if (panel?.classList.contains('open') && panel.contains(t)) return
     if (search?.contains(t)) return
     if (phil && !phil.classList.contains('hidden') && phil.contains(t)) return
@@ -37,6 +40,8 @@ window.addEventListener(
     if (profile && !profile.classList.contains('hidden') && profile.contains(t)) return
     if (wallet?.classList.contains('open') && wallet.contains(t)) return
     if (nav?.contains(t)) return
+    if (playerBar && !playerBar.classList.contains('hidden') && playerBar.contains(t)) return
+    if (playerLyrics && !playerLyrics.classList.contains('hidden') && playerLyrics.contains(t)) return
     e.preventDefault()
   },
   { passive: false },
@@ -71,24 +76,31 @@ ui.onEnter = async () => {
   canvas.focus()
 }
 
-ui.onMute = (muted) => audio.setMuted(muted)
+ui.onMute = (muted) => {
+  audio.setMuted(muted)
+  player.audio.muted = muted
+}
 ui.onClosePanel = () => {
   galaxy.setSelected(null)
   galaxy.setViewShift(0, 0)
 }
-const realAudio = new Audio()
-realAudio.preload = 'none'
+const playerHost = app.querySelector<HTMLElement>('#player-host') ?? app
+const player = new MusicPlayer(playerHost, {
+  onPlayCue: (artist, index) => {
+    void audio.start()
+    audio.playTrackCue(artist, index)
+  },
+  onRealAudioStart: () => {
+    void audio.start()
+    audio.stopAll()
+  },
+  onRealAudioEnd: () => {
+    /* proximity ambience resumes via frame loop */
+  },
+})
 ui.onSelectTrack = (artist, index) => {
   void audio.start()
-  const t = artist.tracks[index]
-  if (t?.audioUrl) {
-    audio.stopAll()
-    realAudio.src = t.audioUrl
-    void realAudio.play().catch(() => {})
-    return
-  }
-  realAudio.pause()
-  audio.playTrackCue(artist, index)
+  player.playTrack(artist, index)
 }
 
 ui.onToggleMode = () => {
