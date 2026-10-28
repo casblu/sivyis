@@ -45,6 +45,11 @@ export type PayInfo = {
   lud16: string | null
   nostrPubkey: string | null
   zapSplits: { pubkey: string; relay?: string; weight: number }[]
+  /**
+   * Optional live V4V / zap total in sats when a real feed provides it.
+   * Omit or null until known — never invent placeholder amounts as real.
+   */
+  zapTotalSats?: number | null
 }
 
 export type OpenInfo = {
@@ -142,6 +147,18 @@ export type Artist = {
   isNew: boolean
   /** Dead-star look: planetary nebula (default) or supernova remnant (very influential) */
   remnant?: 'nebula' | 'supernova'
+  /**
+   * Lesser-known / dormant / new open-catalog star placed in inter-nebula void:
+   * sparse, outside nebula cores, angularly near related genres.
+   */
+  voidStar: boolean
+  /**
+   * 0..1 listen / zap interest energy (proxy until live zap totals plug into pay.zapTotalSats).
+   * Drives relative brightness among new/void stars — not a fake sats balance.
+   */
+  zapEnergy: number
+  /** 0..1 visual luminosity multiplier (void dim; popular new stars brighter). */
+  brightness: number
 }
 export type ArtistStage = 'protostar' | 'star' | 'dead'
 
@@ -1622,6 +1639,161 @@ function computeEdgeFactor(
   return Math.max(0.05, Math.min(0.95, score))
 }
 
+/**
+ * Listen / zap interest proxy (0..1). Uses real pay plumbing when present;
+ * does not invent sats totals — pay.zapTotalSats only counts when a feed supplies it.
+ */
+export function computeZapEnergy(seed: {
+  id: string
+  tracks: Track[]
+  size?: number
+  open?: OpenInfo
+}): number {
+  const pay = seed.open?.pay
+  let e = 0.1
+  if (pay?.valueSplits?.recipients?.length) e += 0.16
+  if (pay?.lud16) e += 0.2
+  if (pay?.nostrPubkey) e += 0.07
+  const zapW = (pay?.zapSplits ?? []).reduce((s, z) => s + (z.weight || 1), 0)
+  e += Math.min(0.22, zapW * 0.07)
+  const audioN = seed.tracks.filter((t) => !!t.audioUrl).length
+  e += Math.min(0.18, audioN * 0.022)
+  const sats = pay?.zapTotalSats
+  if (typeof sats === 'number' && Number.isFinite(sats) && sats > 0) {
+    // Real totals when available — log scale so whales don't blow out the sky
+    e += Math.min(0.42, Math.log10(1 + sats) / 6)
+  }
+  if (seed.size != null && seed.size >= 1.2) e += 0.06
+  e += (hash01(seed.id + ':zap') - 0.5) * 0.05
+  return Math.max(0.05, Math.min(0.95, e))
+}
+
+function brightnessFor(voidStar: boolean, isNew: boolean, zapEnergy: number, size: number): number {
+  if (!voidStar && !isNew) {
+    // Established sample stars: mostly bright; size still shades slightly
+    return Math.max(0.75, Math.min(1, 0.82 + (size - 1) * 0.2))
+  }
+  if (isNew) {
+    // Protostars: clearly new, but popular (high zapEnergy) glow a bit more
+    return Math.max(0.28, Math.min(0.78, 0.32 + zapEnergy * 0.48))
+  }
+  // Dormant / lesser-known void field
+  return Math.max(0.14, Math.min(0.55, 0.16 + zapEnergy * 0.34))
+}
+
+/** Open-catalog + demo new artists scatter into inter-nebula voids (first wave). */
+function shouldPlaceInVoid(seed: ArtistSeed): boolean {
+  return !!seed.open
+}
+
+/**
+ * Sparse void placement: outside nebula cores into dark gaps, but still
+ * angularly nearer the artist's genre (and tag-related neighbors) than others.
+ */
+function placeInVoid(
+  seed: ArtistSeed,
+  sub: Subgenre,
+  instanceId: string,
+  alsoIn: ArtistAlsoIn[],
+): Artist {
+  const parent = GENRE_BY_ID[sub.parentId]
+  const centers = GENRES.map((g) => g.center)
+  const gi = GENRES.findIndex((g) => g.id === parent.id)
+  const near = nearestIndices(centers, Math.max(0, gi), 2)
+  const h1 = hash01(seed.id + ':void')
+  const h2 = hash01(seed.id + ':gap')
+  const h3 = hash01(seed.id + ':rad')
+  const h4 = hash01(seed.id + ':lat')
+
+  // Drift into the dark gap between this genre and a neighbor (not into the neighbor core)
+  const neighbor = GENRES[near[h2 < 0.5 ? 0 : 1]] ?? parent
+  const gapT = 0.28 + h1 * 0.42
+  let dx = parent.center[0] * (1 - gapT) + neighbor.center[0] * gapT - parent.center[0]
+  let dy = parent.center[1] * (1 - gapT) + neighbor.center[1] * gapT - parent.center[1]
+  let dz = parent.center[2] * (1 - gapT) + neighbor.center[2] * gapT - parent.center[2]
+
+  // Tag-based secondary bias when open genreTags mention another main genre name
+  const tags = (seed.open?.genreTags ?? []).map((t) => t.toLowerCase())
+  for (const g of GENRES) {
+    if (g.id === parent.id) continue
+    const hit = tags.some(
+      (t) => t.includes(g.id) || t.includes(g.name.toLowerCase().split(/[^a-z]+/)[0]!),
+    )
+    if (hit) {
+      dx += (g.center[0] - parent.center[0]) * 0.08
+      dy += (g.center[1] - parent.center[1]) * 0.08
+      dz += (g.center[2] - parent.center[2]) * 0.08
+      break
+    }
+  }
+
+  // Lateral jitter so the void field is sparse, not a ring
+  const px = parent.center[0]
+  const py = parent.center[1]
+  const pz = parent.center[2]
+  const plen = Math.sqrt(px * px + py * py + pz * pz) || 1
+  // Simple perpendicular-ish noise in shell tangent plane
+  const jx = (h3 - 0.5) * 2
+  const jy = (h4 - 0.5) * 2
+  const jz = (hash01(seed.id + ':jz') - 0.5) * 2
+  dx += jx * parent.radius * 0.55
+  dy += jy * parent.radius * 0.4
+  dz += jz * parent.radius * 0.55
+
+  // Keep a component along genre direction so they stay nearer this genre than distant ones
+  dx += (px / plen) * parent.radius * 0.15
+  dy += (py / plen) * parent.radius * 0.15
+  dz += (pz / plen) * parent.radius * 0.15
+
+  const dlen = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
+  // Outside cluster core (radius 20) into dark: ~24–48 from genre center
+  const outR = parent.radius * (1.2 + h1 * 1.15)
+  let x = parent.center[0] + (dx / dlen) * outR
+  let y = parent.center[1] + (dy / dlen) * outR
+  let z = parent.center[2] + (dz / dlen) * outR
+
+  // Slight radial scatter toward hollow / past shell so voids feel 3D-thick
+  const radial = (h3 - 0.45) * 14
+  x += (px / plen) * radial
+  y += (py / plen) * radial
+  z += (pz / plen) * radial
+
+  const zapEnergy = computeZapEnergy(seed)
+  const isNew = DEMO_NEW_ARTIST_IDS.has(seed.id)
+  // Dim field stars; slightly larger when zapEnergy is high (still << mainstream)
+  const size = Math.max(0.28, Math.min(0.62, 0.3 + zapEnergy * 0.28 + (isNew ? 0.06 : 0)))
+  const brightness = brightnessFor(true, isNew, zapEnergy, size)
+
+  return {
+    id: instanceId,
+    baseId: seed.id,
+    name: seed.name,
+    genre: parent.name,
+    genreId: sub.parentId,
+    subgenreId: sub.id,
+    subgenre: sub.name,
+    alsoIn,
+    bio: seed.bio,
+    tracks: seed.tracks,
+    color: sub.color,
+    size,
+    offset: seed.offset,
+    position: [x, y, z],
+    audio: { ...sub.audio },
+    open: seed.open,
+    memorial: MEMORIALS[seed.id],
+    showBalance: false,
+    deceased: !!MEMORIALS[seed.id],
+    deathYear: MEMORIALS[seed.id] ? Number(MEMORIALS[seed.id].diedOn.slice(0, 4)) : undefined,
+    isNew,
+    stage: MEMORIALS[seed.id] ? 'dead' : isNew ? 'protostar' : 'star',
+    remnant: MEMORIALS[seed.id] ? (SUPERNOVA_REMNANTS.has(seed.id) ? 'supernova' : 'nebula') : undefined,
+    voidStar: true,
+    zapEnergy,
+    brightness,
+  }
+}
+
 function placeAtSubgenre(
   seed: ArtistSeed,
   sub: Subgenre,
@@ -1629,6 +1801,10 @@ function placeAtSubgenre(
   alsoIn: ArtistAlsoIn[],
   isSecondary = false,
 ): Artist {
+  if (shouldPlaceInVoid(seed) && !isSecondary) {
+    return placeInVoid(seed, sub, instanceId, alsoIn)
+  }
+
   const [ox, oy, oz] = seed.offset
   const parent = GENRE_BY_ID[sub.parentId]
   const edge = computeEdgeFactor(seed, sub, isSecondary)
@@ -1671,6 +1847,11 @@ function placeAtSubgenre(
   y = parent.center[1] + dy * scale
   z = parent.center[2] + dz * scale
 
+  const size = seed.size ?? 0.95 + Math.abs(ox + oy + oz) * 0.15
+  const zapEnergy = computeZapEnergy(seed)
+  const isNew = DEMO_NEW_ARTIST_IDS.has(seed.id)
+  const brightness = brightnessFor(false, isNew, zapEnergy, size)
+
   return {
     id: instanceId,
     baseId: seed.id,
@@ -1683,7 +1864,7 @@ function placeAtSubgenre(
     bio: seed.bio,
     tracks: seed.tracks,
     color: sub.color,
-    size: seed.size ?? 0.95 + Math.abs(ox + oy + oz) * 0.15,
+    size,
     offset: seed.offset,
     position: [x, y, z],
     audio: { ...sub.audio },
@@ -1692,9 +1873,12 @@ function placeAtSubgenre(
     showBalance: false,
     deceased: !!MEMORIALS[seed.id],
     deathYear: MEMORIALS[seed.id] ? Number(MEMORIALS[seed.id].diedOn.slice(0, 4)) : undefined,
-    isNew: DEMO_NEW_ARTIST_IDS.has(seed.id),
-    stage: MEMORIALS[seed.id] ? 'dead' : DEMO_NEW_ARTIST_IDS.has(seed.id) ? 'protostar' : 'star',
+    isNew,
+    stage: MEMORIALS[seed.id] ? 'dead' : isNew ? 'protostar' : 'star',
     remnant: MEMORIALS[seed.id] ? (SUPERNOVA_REMNANTS.has(seed.id) ? 'supernova' : 'nebula') : undefined,
+    voidStar: false,
+    zapEnergy,
+    brightness,
   }
 }
 

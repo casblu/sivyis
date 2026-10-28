@@ -98,6 +98,8 @@ export type StarHandle = {
   vis: number
   genreCenter: THREE.Vector3
   genreRadius: number
+  /** Cached artist.brightness (void dim / zap-energy brighter new stars). */
+  baseBrightness: number
 }
 
 export type NebulaHandle = {
@@ -692,6 +694,17 @@ export class GalaxyScene {
         this.genreVis.set(star.artist.genreId, v)
       }
       if (this.selectedId && (star.artist.baseId === this.selectedId || star.artist.id === this.selectedId)) v = 1
+      // Void / dormant field stars: also peek when the camera is near the star itself
+      // (inter-nebula dark gaps), not only when inside the home nebula.
+      if (star.artist.voidStar) {
+        const starDist = cam.distanceTo(star.group.position)
+        const nearStar = Math.max(0, Math.min(1, 1 - starDist / 52))
+        const voidPeek = nearStar * nearStar * (0.55 + star.baseBrightness * 0.35)
+        v = Math.max(v * 0.85, voidPeek)
+        // Slightly wider nebula falloff so they read as fringe-into-dark
+        v = Math.min(1, v * 1.05)
+      }
+      if (this.selectedId && (star.artist.baseId === this.selectedId || star.artist.id === this.selectedId)) v = 1
       star.vis = v
       star.group.visible = v > 0.005
     }
@@ -723,12 +736,14 @@ export class GalaxyScene {
       // Outer shells/halos fade faster than core so mist + spark dominate close-up
       const shellFade = 1 - close * 0.92
       const haloFade = 1 - close * 0.97
-      shellMat.opacity = (selected ? 0.22 : 0.14) * pulse * amp * shellFade
-      glowMat.opacity = (selected ? 0.1 : 0.055) * pulse * amp * haloFade
+      const bright = star.baseBrightness
+      shellMat.opacity = (selected ? 0.22 : 0.14) * pulse * amp * shellFade * (0.55 + bright * 0.45)
+      glowMat.opacity = (selected ? 0.1 : 0.055) * pulse * amp * haloFade * (0.5 + bright * 0.5)
       // Slightly punchier emissive core when shrunk to a spark (still cinematic, not bloom-wash)
       const coreMat = star.core.material as unknown as SoftGlowMaterial
-      coreMat.emissiveIntensity = 1.6 + close * 0.55
-      coreMat.opacity = vis
+      // Void/dormant stay dim; popular new (high zapEnergy → brightness) glow more among protostars
+      coreMat.emissiveIntensity = (0.55 + bright * 1.35) + close * 0.55 * bright
+      coreMat.opacity = vis * (0.45 + bright * 0.55)
       if (star.memorialHalo) {
         // Gentle two-frequency shimmer; brighter and readable from far zoom.
         const shimmer = 0.85 + Math.sin(t * 1.3 + star.pulse) * 0.1 + Math.sin(t * 3.7 + star.pulse * 2) * 0.05
@@ -744,8 +759,9 @@ export class GalaxyScene {
       if (star.stageFx) {
         const breathe = 0.94 + Math.sin(t * 0.9 + star.pulse) * 0.06
         star.stageFx.scale.setScalar(star.stageFxScale! * (selected ? 1.15 : 1) * breathe)
-        star.stageFx.material.opacity = vis * (1 - close * 0.35) * (playing ? 0.9 + this.playingAmp * 0.3 : 1)
-        if (star.artist.stage === 'dead') coreMat.emissiveIntensity = 0.9
+        star.stageFx.material.opacity =
+          vis * (1 - close * 0.35) * (0.4 + bright * 0.6) * (playing ? 0.9 + this.playingAmp * 0.3 : 1)
+        if (star.artist.stage === 'dead') coreMat.emissiveIntensity = 0.9 * bright
       }
     }
 
@@ -1182,11 +1198,19 @@ export class GalaxyScene {
       if (stage === 'dead') color.set(0xdde8ff) // faint hot white dwarf
       if (stage === 'protostar') color.lerp(new THREE.Color(0xffd2a0), 0.7)
       const pickScale = artist.size * 1.55
-      const coreScale = pickScale * (stage === 'dead' ? 0.22 : stage === 'protostar' ? 0.45 : 1)
+      const bright = artist.brightness
+      const coreScale =
+        pickScale *
+        (stage === 'dead' ? 0.22 : stage === 'protostar' ? 0.4 + bright * 0.2 : artist.voidStar ? 0.55 + bright * 0.35 : 1)
       const core = new THREE.Mesh(
         this.sharedCoreGeo,
         // Soft hot core: bright centre, fully transparent rim (no hard edge at any distance).
-        new SoftGlowMaterial(color.clone().lerp(new THREE.Color(0xffffff), 0.25), 1, 0.9, 1.6),
+        new SoftGlowMaterial(
+          color.clone().lerp(new THREE.Color(0xffffff), 0.15 + bright * 0.2),
+          Math.max(0.25, bright),
+          0.9,
+          0.7 + bright * 1.1,
+        ),
       )
       core.scale.setScalar(coreScale)
       core.userData.artistId = artist.id
@@ -1194,7 +1218,7 @@ export class GalaxyScene {
       // Soft volumetric mid shell — additive sphere, always round.
       const shell = new THREE.Mesh(
         this.sharedShellGeo,
-        new SoftGlowMaterial(color, 0.14, 0.7),
+        new SoftGlowMaterial(color, 0.06 + bright * 0.1, 0.7),
       )
       shell.scale.setScalar(coreScale * 1.75)
       shell.userData.artistId = artist.id
@@ -1202,7 +1226,7 @@ export class GalaxyScene {
       // Outer halo shell — soft bloom rim without Sprite squares.
       const glow = new THREE.Mesh(
         this.sharedHaloGeo,
-        new SoftGlowMaterial(color.clone().lerp(new THREE.Color(0xffffff), 0.35), 0.055, 0.5),
+        new SoftGlowMaterial(color.clone().lerp(new THREE.Color(0xffffff), 0.25 + bright * 0.2), 0.025 + bright * 0.045, 0.5),
       )
       glow.scale.setScalar(coreScale * 3.1)
       glow.userData.artistId = artist.id
@@ -1268,7 +1292,8 @@ export class GalaxyScene {
         stageFxScale,
         vis: 0,
         genreCenter: new THREE.Vector3(...GENRE_BY_ID[artist.genreId].center),
-        genreRadius: GENRE_BY_ID[artist.genreId].radius,
+        genreRadius: GENRE_BY_ID[artist.genreId].radius * (artist.voidStar ? 1.35 : 1),
+        baseBrightness: bright,
       }
       this.stars.push(handle)
       this.starById.set(artist.id, handle)
