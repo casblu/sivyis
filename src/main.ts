@@ -54,6 +54,7 @@ canvas.tabIndex = 0
 
 const galaxy = new GalaxyScene(canvas)
 const fly = new FlyControls(galaxy.camera, canvas)
+fly.snapToOverview()
 const audio = new ProximityAudio()
 
 const ndc = new THREE.Vector2()
@@ -69,9 +70,9 @@ ui.onEnter = async () => {
   await audio.start()
   running = true
   fly.enabled = true
-  // Skip locked overview — open already navigable.
-  fly.enterFly({ lock: !fly.isTouch })
-  ui.setNavMode('fly')
+  // Start zoomed out: full nebula overview. Toggle/gesture enters fly.
+  fly.snapToOverview()
+  ui.setNavMode('overview')
   ui.entered(fly.isTouch)
   canvas.focus()
 }
@@ -105,8 +106,9 @@ ui.onSelectTrack = (artist, index) => {
 
 ui.onToggleMode = () => {
   if (!running) return
-  // Overview removed — always stay in navigable fly.
-  if (fly.navMode !== 'fly') {
+  if (fly.navMode === 'fly') {
+    fly.returnToOverview()
+  } else {
     fly.enterFly({ lock: !fly.isTouch })
     ui.setNavMode('fly')
   }

@@ -72,7 +72,7 @@ export class FlyControls {
   pointerLocked = false
   thrusting = false
   isTouch = false
-  navMode: NavMode = 'fly'
+  navMode: NavMode = 'overview'
 
   onTap: ((result: TapResult) => void) | null = null
   onGesture: (() => void) | null = null
@@ -159,6 +159,20 @@ export class FlyControls {
     this.syncYawPitchFromCamera()
     this.onModeChange?.('fly')
     if (opts?.lock && !this.isTouch) this.lock()
+  }
+
+  /** Instantly place camera at overview orbit (no flight). */
+  snapToOverview(): void {
+    this.cancelFlight()
+    this.unlock()
+    this.camera.position.copy(this.overviewPosition(this.overviewYaw + this.overviewUserSpin))
+    this.camera.lookAt(0, 4, 0)
+    this.navMode = 'overview'
+    this.velocity.set(0, 0, 0)
+    this.yawVel = 0
+    this.pitchVel = 0
+    this.syncYawPitchFromCamera()
+    this.onModeChange?.('overview')
   }
 
   /** Smooth return to gentle auto-orbit overview of the whole galaxy. */

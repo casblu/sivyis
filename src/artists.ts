@@ -12,7 +12,7 @@ import {
   nearestIndices,
 } from './genreBall.ts'
 
-export { GENRE_BALL_RADIUS, START_INSIDE_POS, START_LOOK_AT } from './genreBall.ts'
+export { GENRE_BALL_RADIUS, START_INSIDE_POS, START_LOOK_AT, OVERVIEW_ORBIT_RADIUS } from './genreBall.ts'
 
 export type CatalogSource = 'rss' | 'nostr'
 

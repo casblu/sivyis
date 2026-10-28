@@ -8,8 +8,7 @@ import {
   GENRE_BY_ID,
   GENRES,
   SUBGENRES,
-  START_INSIDE_POS,
-  START_LOOK_AT,
+  OVERVIEW_ORBIT_RADIUS,
   baseArtistId,
   type Artist,
   type Genre,
@@ -384,8 +383,8 @@ export class GalaxyScene {
 
     this.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 900)
     // Start INSIDE the hollow genre ball, looking outward at surrounding clusters
-    this.camera.position.set(...START_INSIDE_POS)
-    this.camera.lookAt(...START_LOOK_AT)
+    this.camera.position.set(0, 4 + OVERVIEW_ORBIT_RADIUS * 0.35, OVERVIEW_ORBIT_RADIUS)
+    this.camera.lookAt(0, 4, 0)
 
     this.mistParticleTex = softParticleTexture()
 
