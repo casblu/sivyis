@@ -334,6 +334,12 @@ type ArtistSeed = {
   tracks: Track[]
   offset: [number, number, number]
   size?: number
+  /**
+   * Optional 0..1 override: how far from the genre center this artist sits.
+   * 0 = core/mainstream (inward), 1 = niche / genre-bending (outer rim).
+   * When omitted, computed from alsoIn, size, subgenre niche keywords, open tags.
+   */
+  edge?: number
   open?: OpenInfo
 }
 
@@ -380,6 +386,8 @@ const seeds: ArtistSeed[] = [
       { title: 'Hold On, We\'re Going Home', duration: '3:51' },
     ],
     offset: [-0.45, 0.05, 0.35],
+    size: 1.32,
+    edge: 0.22,
   },
   {
     id: slug('Nicki Minaj'),
@@ -430,6 +438,7 @@ const seeds: ArtistSeed[] = [
       { title: 'FE!N', duration: '3:11' },
     ],
     offset: [0.35, -0.35, -0.4],
+    edge: 0.7,
   },
   {
     id: slug('Cardi B'),
@@ -478,6 +487,7 @@ const seeds: ArtistSeed[] = [
       { title: 'Sock It 2 Me', duration: '4:16' },
     ],
     offset: [0.4, 0.25, 0.55],
+    edge: 0.72,
   },
 
   // —— Pop ——
@@ -497,6 +507,7 @@ const seeds: ArtistSeed[] = [
     ],
     offset: [0.05, 0.15, -0.1],
     size: 1.35,
+    edge: 0.08,
   },
   {
     id: slug('Beyoncé'),
@@ -962,6 +973,7 @@ const seeds: ArtistSeed[] = [
       { title: 'Alberto Balsalm', duration: '5:11' },
     ],
     offset: [0.15, 0.5, 0.5],
+    edge: 0.82,
   },
 
   // —— Jazz ——
@@ -1329,6 +1341,7 @@ const seeds: ArtistSeed[] = [
     ],
     offset: [0.0, 0.2, -0.1],
     size: 1.28,
+    edge: 0.66,
   },
   {
     id: slug('Tame Impala'),
@@ -1525,6 +1538,7 @@ const seeds: ArtistSeed[] = [
       { title: 'Sober', duration: '5:06' },
     ],
     offset: [-0.5, -0.15, 0.05],
+    edge: 0.78,
   },
   {
     id: slug('Rammstein'),
@@ -1544,19 +1558,119 @@ const seeds: ArtistSeed[] = [
   },
 ]
 
+/** Stable 0..1 hash from id (keeps layout deterministic across reloads). */
+function hash01(id: string): number {
+  let h = 2166136261
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return ((h >>> 0) % 10000) / 10000
+}
+
+const NICHE_SUB_RE =
+  /alternative|experimental|industrial|drill|synthwave|progressive|prog\b|ambient|doom|art[\s-]?pop|chamber|post[\s-]?punk|conscious|americana|fusion|nu[\s-]?metal|punk|dream[\s-]?pop|electropop|quiet[\s-]?storm|outlaw|bluegrass|brazilian|regional|bebop|techno|drum/
+const CORE_SUB_RE =
+  /teen[\s-]?pop|boom[\s-]?bap|classic[\s-]?rock|thrash|dance[\s-]?pop|house\b|gospel|cool\b|contemporary[\s-]?r|latin[\s-]?pop|country[\s-]?pop|indie[\s-]?pop|reggaeton|vocal[\s-]?jazz/
+
+/**
+ * How far from the genre center an artist should sit (0 = core/inward, 1 = niche/outer).
+ * Prefer seed.edge override when automatic signals would mis-rank a flagship act.
+ */
+function computeEdgeFactor(
+  seed: ArtistSeed,
+  sub: Subgenre,
+  isSecondary: boolean,
+): number {
+  if (typeof seed.edge === 'number' && Number.isFinite(seed.edge)) {
+    return Math.max(0.04, Math.min(0.96, seed.edge))
+  }
+
+  let score = 0.34
+  const alsoCount = (seed.alsoIn ?? []).length
+  const size = seed.size ?? 0.95 + Math.abs(seed.offset[0] + seed.offset[1] + seed.offset[2]) * 0.15
+
+  // Genre-bending: alsoIn tags push outward (dampened for oversized mainstream stars)
+  let alsoBoost = Math.min(alsoCount, 3) * 0.14
+  if (size >= 1.28) alsoBoost *= 0.32
+  else if (size >= 1.12) alsoBoost *= 0.55
+  score += alsoBoost
+
+  // Open-catalog tag diversity → niche / cross-genre
+  const tags = seed.open?.genreTags?.length ?? 0
+  if (tags >= 4) score += 0.16
+  else if (tags >= 3) score += 0.11
+  else if (tags >= 2) score += 0.06
+  if (seed.open) score += 0.08 // indie V4V catalog leans niche vs sample megastars
+
+  // Larger stars ≈ more central / mainstream
+  if (size >= 1.32) score -= 0.24
+  else if (size >= 1.22) score -= 0.16
+  else if (size >= 1.1) score -= 0.08
+  else if (size <= 0.85) score += 0.1
+
+  const subKey = `${sub.id} ${sub.name}`.toLowerCase()
+  if (NICHE_SUB_RE.test(subKey)) score += 0.17
+  if (CORE_SUB_RE.test(subKey)) score -= 0.13
+
+  // Secondary alsoIn instances sit toward the rim of those clusters
+  if (isSecondary) score += 0.18
+
+  // Tiny hash jitter so artists don't collapse onto one ring
+  score += (hash01(seed.id + (isSecondary ? ':sec' : '')) - 0.5) * 0.07
+
+  return Math.max(0.05, Math.min(0.95, score))
+}
+
 function placeAtSubgenre(
   seed: ArtistSeed,
   sub: Subgenre,
   instanceId: string,
   alsoIn: ArtistAlsoIn[],
+  isSecondary = false,
 ): Artist {
   const [ox, oy, oz] = seed.offset
-  const cluster = 0.78
-  const r = sub.radius * cluster
-  const x = sub.center[0] + ox * r
-  const y = sub.center[1] + oy * r * 0.7
-  const z = sub.center[2] + oz * r
   const parent = GENRE_BY_ID[sub.parentId]
+  const edge = computeEdgeFactor(seed, sub, isSecondary)
+
+  // Pull along genre→subgenre axis: core near genre center, niche near cluster fringe
+  const pull = 0.22 + edge * 0.88 // ~0.22..1.10 of the way to (and past) the subgenre orbit
+  const baseX = parent.center[0] + (sub.center[0] - parent.center[0]) * pull
+  const baseY = parent.center[1] + (sub.center[1] - parent.center[1]) * pull
+  const baseZ = parent.center[2] + (sub.center[2] - parent.center[2]) * pull
+
+  // Keep local subgenre clustering; niche artists get a slightly wider local spread
+  const localR = sub.radius * (0.38 + edge * 0.42)
+  let x = baseX + ox * localR
+  let y = baseY + oy * localR * 0.7
+  let z = baseZ + oz * localR
+
+  // Genre-benders: bias toward a neighboring alsoIn genre on the shell (border feel)
+  const bendTargets = alsoIn.filter((a) => a.genreId !== sub.parentId)
+  if (bendTargets.length > 0) {
+    const other = GENRE_BY_ID[bendTargets[0].genreId]
+    if (other) {
+      const bias = (0.1 + edge * 0.12) * (isSecondary ? 0.55 : 1)
+      x += (other.center[0] - parent.center[0]) * bias * 0.12
+      y += (other.center[1] - parent.center[1]) * bias * 0.12
+      z += (other.center[2] - parent.center[2]) * bias * 0.12
+    }
+  }
+
+  // Soft clamp distance from genre center into [inner, outer] fringe band
+  const dx = x - parent.center[0]
+  const dy = y - parent.center[1]
+  const dz = z - parent.center[2]
+  const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
+  const minR = parent.radius * (0.18 + edge * 0.12)
+  const maxR = parent.radius * (0.55 + edge * 0.42) // high edge → near GENRE_CLUSTER_RADIUS
+  const targetR = Math.max(minR, Math.min(maxR, dist))
+  // Blend toward targetR so we don't destroy local offsets entirely
+  const scale = (dist * 0.35 + targetR * 0.65) / dist
+  x = parent.center[0] + dx * scale
+  y = parent.center[1] + dy * scale
+  z = parent.center[2] + dz * scale
+
   return {
     id: instanceId,
     baseId: seed.id,
@@ -1590,14 +1704,15 @@ function expandSeeds(list: ArtistSeed[]): Artist[] {
     const primary = SUBGENRE_BY_ID[seed.subgenreId]
     if (!primary) throw new Error(`Unknown subgenre ${seed.subgenreId} for ${seed.id}`)
     const alsoIn = seed.alsoIn ?? []
-    out.push(placeAtSubgenre(seed, primary, seed.id, alsoIn))
-    // Secondary star instances in other clusters — same profile (baseId)
+    out.push(placeAtSubgenre(seed, primary, seed.id, alsoIn, false))
+    // Secondary star instances in other clusters — same profile (baseId), rim-biased
     for (const extra of alsoIn) {
       const sub = SUBGENRE_BY_ID[extra.subgenreId]
       if (!sub) throw new Error(`Unknown alsoIn subgenre ${extra.subgenreId} for ${seed.id}`)
-      // Slightly nudge offset so multi-instances don't stack identically
       const nudged: ArtistSeed = {
         ...seed,
+        // Drop primary edge override so secondary uses rim-biased auto score
+        edge: seed.edge != null ? Math.min(0.92, Math.max(0.55, seed.edge + 0.25)) : undefined,
         offset: [
           seed.offset[0] * -0.7 + 0.15,
           seed.offset[1] * 0.6 - 0.1,
@@ -1605,7 +1720,7 @@ function expandSeeds(list: ArtistSeed[]): Artist[] {
         ],
         size: (seed.size ?? 1) * 0.92,
       }
-      out.push(placeAtSubgenre(nudged, sub, `${seed.id}__${extra.subgenreId}`, alsoIn))
+      out.push(placeAtSubgenre(nudged, sub, `${seed.id}__${extra.subgenreId}`, alsoIn, true))
     }
   }
   return out
