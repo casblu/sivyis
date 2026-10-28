@@ -12,7 +12,7 @@ export const START_INSIDE_POS: [number, number, number] = [0, 3, 8]
 /** Rough look-at on the shell (first fibonacci genre is near +Y; we aim mid-lat). */
 export const START_LOOK_AT: [number, number, number] = [55, 12, 70]
 
-export const OVERVIEW_ORBIT_RADIUS = GENRE_BALL_RADIUS + 70 // ~162
+export const OVERVIEW_ORBIT_RADIUS = GENRE_BALL_RADIUS + 160 // ~252
 
 /** Fibonacci / golden-angle sphere — equal spacing, hollow (nothing at origin). */
 export function fibonacciSphere(n: number, radius: number): [number, number, number][] {
