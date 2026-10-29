@@ -1,5 +1,7 @@
 import type { Artist, Track } from './artists.ts'
 import artistPhotos from './artistPhotos.json'
+import { mountEnergyZap } from './zapForm.ts'
+import { energyIcon, formatEnergyText, wallet, MAX_PLAY_SATS, type SendResult } from './wallet.ts'
 
 type Photo = { file: string; artist: string; license: string; source: string }
 const PHOTOS = artistPhotos as Record<string, Photo[]>
@@ -14,6 +16,10 @@ export type PlayerHandlers = {
   onRealAudioStart: () => void
   /** Allow proximity ambience again when real media stops */
   onRealAudioEnd: () => void
+  /** A track playback started (not a mid-track resume). */
+  onPlayStart?: (artist: Artist, index: number) => void
+  /** Confirmed zap from the player. Demo wallet only. */
+  onZap?: (artist: Artist, sats: number) => SendResult
 }
 
 function escapeHtml(value: string): string {
@@ -91,6 +97,13 @@ export class MusicPlayer {
   private lyricsSheet: HTMLElement
   private lyricsBody: HTMLElement
   private lyricsBtn: HTMLButtonElement
+  private energyBtn: HTMLButtonElement
+  private energyPop: HTMLElement
+  private energyNote: HTMLElement
+  private zapSheet: HTMLElement
+  private playBilled = false
+  private playGen = 0
+  private unsubWallet: (() => void) | null = null
 
   constructor(host: HTMLElement, handlers: PlayerHandlers) {
     this.handlers = handlers
@@ -108,6 +121,10 @@ export class MusicPlayer {
         <div class="player-meta">
           <strong id="player-title">—</strong>
           <em id="player-artist">—</em>
+          <button type="button" id="player-energy" class="energy-chip" aria-expanded="false" aria-controls="player-energy-pop">
+            <span id="player-energy-label"></span>
+          </button>
+          <span id="player-energy-note" class="energy-note" role="status"></span>
         </div>
         <div class="player-controls">
           <button type="button" id="player-shuffle" aria-pressed="false" title="Shuffle" aria-label="Shuffle">⇄</button>
@@ -122,10 +139,28 @@ export class MusicPlayer {
           <span id="player-dur">0:00</span>
         </div>
         <div class="player-extra">
+          <button type="button" id="player-zap" class="player-zap">Zap</button>
           <button type="button" id="player-lyrics-btn" aria-expanded="false" aria-controls="player-lyrics">Lyrics</button>
           <button type="button" id="player-close" aria-label="Close player">×</button>
         </div>
+        <div id="player-energy-pop" class="energy-pop hidden" aria-hidden="true">
+          <p class="kicker">Energy per play</p>
+          <label class="energy-toggle"><input id="player-energy-on" type="checkbox" /> Send Energy on each play</label>
+          <label class="zap-custom-label" for="player-energy-amt">Amount</label>
+          <div class="energy-amt-row">
+            <input id="player-energy-amt" type="number" inputmode="numeric" min="1" max="${MAX_PLAY_SATS}" step="1" value="1" aria-label="Sats of Energy per play" />
+            <span>sats of Energy</span>
+          </div>
+          <p class="demo-note">Default is 1 sat of Energy. This demo wallet never moves real funds. Turn it off anytime.</p>
+        </div>
       </div>
+      <aside id="player-zap-sheet" class="hidden" aria-hidden="true" aria-label="Zap Energy">
+        <div class="player-lyrics-head">
+          <p class="kicker">Zap Energy</p>
+          <button type="button" id="player-zap-close" aria-label="Close zap">×</button>
+        </div>
+        <div id="player-zap-body"></div>
+      </aside>
       <aside id="player-lyrics" class="hidden" aria-hidden="true" aria-label="Lyrics">
         <div class="player-lyrics-head">
           <p class="kicker">Lyrics</p>
@@ -149,8 +184,23 @@ export class MusicPlayer {
     this.lyricsSheet = must(host, '#player-lyrics')
     this.lyricsBody = must(host, '#player-lyrics-body')
     this.lyricsBtn = must(host, '#player-lyrics-btn') as HTMLButtonElement
+    this.energyBtn = must(host, '#player-energy') as HTMLButtonElement
+    this.energyPop = must(host, '#player-energy-pop')
+    this.energyNote = must(host, '#player-energy-note')
+    this.zapSheet = must(host, '#player-zap-sheet')
 
     this.bind()
+    this.paintEnergyChip()
+    this.syncEnergyInputs()
+    this.unsubWallet = wallet.subscribe(() => {
+      this.paintEnergyChip()
+      this.syncEnergyInputs()
+    })
+  }
+
+  dispose(): void {
+    this.unsubWallet?.()
+    this.unsubWallet = null
   }
 
   get visible(): boolean {
@@ -180,6 +230,9 @@ export class MusicPlayer {
     this.audio.load()
     this.el.classList.add('hidden')
     this.closeLyrics()
+    this.closeZap()
+    this.energyPop.classList.add('hidden')
+    this.energyBtn.setAttribute('aria-expanded', 'false')
     document.documentElement.classList.remove('player-open')
     this.handlers.onRealAudioEnd()
   }
@@ -192,6 +245,7 @@ export class MusicPlayer {
   private bind(): void {
     this.el.addEventListener('pointerdown', (e) => e.stopPropagation())
     this.lyricsSheet.addEventListener('pointerdown', (e) => e.stopPropagation())
+    this.zapSheet.addEventListener('pointerdown', (e) => e.stopPropagation())
 
     this.playBtn.addEventListener('click', () => this.togglePlay())
     must(this.el, '#player-prev').addEventListener('click', () => this.prev())
@@ -199,6 +253,10 @@ export class MusicPlayer {
     this.shuffleBtn.addEventListener('click', () => this.toggleShuffle())
     this.loopBtn.addEventListener('click', () => this.cycleLoop())
     must(this.el, '#player-close').addEventListener('click', () => this.hide())
+    must(this.el, '#player-zap').addEventListener('click', () => this.openZap())
+    must(document, '#player-zap-close').addEventListener('click', () => this.closeZap())
+    this.energyBtn.addEventListener('click', () => this.toggleEnergyPop())
+    this.bindEnergySettings()
     this.lyricsBtn.addEventListener('click', () => this.toggleLyrics())
     this.artEl.addEventListener('click', () => this.toggleLyrics())
     must(document, '#player-lyrics-close').addEventListener('click', () => this.closeLyrics())
@@ -231,8 +289,98 @@ export class MusicPlayer {
         this.cueMode = true
         this.handlers.onPlayCue(this.artist, this.index)
         this.setPlaying(true)
+        this.markPlayStarted()
       }
     })
+  }
+
+  private bindEnergySettings(): void {
+    const on = must(this.energyPop, '#player-energy-on') as HTMLInputElement
+    const amt = must(this.energyPop, '#player-energy-amt') as HTMLInputElement
+    on.addEventListener('change', () => {
+      wallet.setPlaySettings({ enabled: on.checked })
+    })
+    amt.addEventListener('change', () => {
+      const n = Math.round(Number(amt.value))
+      if (!Number.isFinite(n) || n < 1) {
+        amt.value = String(wallet.playSettings.satsPerPlay)
+        return
+      }
+      wallet.setPlaySettings({ satsPerPlay: Math.min(MAX_PLAY_SATS, n) })
+      amt.value = String(wallet.playSettings.satsPerPlay)
+    })
+  }
+
+  private syncEnergyInputs(): void {
+    const on = this.energyPop.querySelector<HTMLInputElement>('#player-energy-on')
+    const amt = this.energyPop.querySelector<HTMLInputElement>('#player-energy-amt')
+    if (!on || !amt) return
+    const s = wallet.playSettings
+    on.checked = s.enabled
+    if (document.activeElement !== amt) amt.value = String(s.satsPerPlay)
+  }
+
+  private paintEnergyChip(): void {
+    const s = wallet.playSettings
+    const label = s.enabled ? `${formatEnergyText(s.satsPerPlay)} / play` : 'Energy off'
+    const slot = must(this.energyBtn, '#player-energy-label')
+    slot.innerHTML = `${energyIcon()}<span>${label}</span>`
+    this.energyBtn.setAttribute('aria-label', s.enabled ? `Each play sends ${formatEnergyText(s.satsPerPlay)}. Change amount.` : 'Energy per play is off. Change setting.')
+  }
+
+  notifyEnergy(message: string, ok: boolean): void {
+    this.energyNote.textContent = message
+    this.energyNote.classList.toggle('ok', ok)
+    this.energyNote.classList.toggle('err', !ok)
+    this.energyBtn.classList.toggle('sent', ok)
+    window.setTimeout(() => {
+      if (this.energyNote.textContent === message) this.energyNote.textContent = ''
+      this.energyBtn.classList.remove('sent')
+    }, 1700)
+  }
+
+  private toggleEnergyPop(): void {
+    const shown = this.energyPop.classList.contains('hidden')
+    this.energyPop.classList.toggle('hidden', !shown)
+    this.energyPop.setAttribute('aria-hidden', String(!shown))
+    this.energyBtn.setAttribute('aria-expanded', String(shown))
+    if (shown) this.syncEnergyInputs()
+  }
+
+  private openZap(): void {
+    if (!this.artist) return
+    this.closeLyrics()
+    this.energyPop.classList.add('hidden')
+    this.energyBtn.setAttribute('aria-expanded', 'false')
+    const artist = this.artist
+    this.zapSheet.classList.remove('hidden')
+    this.zapSheet.setAttribute('aria-hidden', 'false')
+    mountEnergyZap(must(this.zapSheet, '#player-zap-body'), {
+      artistName: artist.name,
+      onConfirm: (sats) => this.handlers.onZap?.(artist, sats) ?? { ok: false, error: 'Zap unavailable' },
+    })
+  }
+
+  private closeZap(): void {
+    this.zapSheet.classList.add('hidden')
+    this.zapSheet.setAttribute('aria-hidden', 'true')
+  }
+
+  private markPlayStarted(): void {
+    if (this.playBilled || !this.artist) return
+    this.playBilled = true
+    this.handlers.onPlayStart?.(this.artist, this.index)
+  }
+
+  private armCueEnd(): void {
+    const gen = this.playGen
+    window.setTimeout(() => {
+      if (this.playGen !== gen) return
+      if (this.cueMode && this.playing) {
+        this.setPlaying(false)
+        this.playBilled = false
+      }
+    }, 2800)
   }
 
   private track(): Track | null {
@@ -245,6 +393,8 @@ export class MusicPlayer {
     const track = this.track()
     if (!artist || !track) return
 
+    this.playGen += 1
+    this.playBilled = false
     this.titleEl.textContent = track.title
     this.artistEl.textContent = artist.name
     this.renderArt(artist)
@@ -264,7 +414,7 @@ export class MusicPlayer {
         this.audio.src = track.audioUrl
       }
       if (autoplay) {
-        void this.audio.play().catch(() => {
+        void this.audio.play().then(() => this.markPlayStarted()).catch(() => {
           this.setPlaying(false)
         })
       } else {
@@ -279,10 +429,8 @@ export class MusicPlayer {
       if (autoplay) {
         this.handlers.onPlayCue(artist, this.index)
         this.setPlaying(true)
-        // Demo cues are short flourishes — clear playing after a beat.
-        window.setTimeout(() => {
-          if (this.cueMode && this.playing) this.setPlaying(false)
-        }, 2800)
+        this.markPlayStarted()
+        this.armCueEnd()
       } else {
         this.setPlaying(false)
       }
@@ -326,14 +474,16 @@ export class MusicPlayer {
       } else {
         this.handlers.onPlayCue(this.artist, this.index)
         this.setPlaying(true)
-        window.setTimeout(() => {
-          if (this.cueMode && this.playing) this.setPlaying(false)
-        }, 2800)
+        this.markPlayStarted()
+        this.armCueEnd()
       }
       return
     }
-    if (this.audio.paused) void this.audio.play().catch(() => {})
-    else this.audio.pause()
+    if (this.audio.paused) {
+      void this.audio.play().then(() => this.markPlayStarted()).catch(() => {})
+    } else {
+      this.audio.pause()
+    }
   }
 
   private pause(): void {
@@ -437,9 +587,10 @@ export class MusicPlayer {
   }
 
   private onEnded(): void {
+    this.playBilled = false
     if (this.loop === 'one') {
       this.audio.currentTime = 0
-      void this.audio.play().catch(() => {})
+      void this.audio.play().then(() => this.markPlayStarted()).catch(() => {})
       return
     }
     this.next()

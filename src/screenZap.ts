@@ -70,7 +70,7 @@ export function playScreenZap(opts: { color?: number; name?: string } = {}): voi
   if (opts.name) {
     rg.textAlign = 'center'; rg.textBaseline = 'middle'
     rg.fillStyle = 'rgba(255,255,255,0.92)'; rg.font = `600 ${Math.round(Math.max(16, R * 0.16))}px "Exo 2", sans-serif`; rg.fillText(opts.name, rc, rc)
-    rg.fillStyle = `rgba(${rgb},0.9)`; rg.font = `500 ${Math.round(Math.max(11, R * 0.07))}px "Exo 2", sans-serif`; rg.fillText('⚡ BTC SENT', rc, rc + R * 0.18)
+    rg.fillStyle = `rgba(${rgb},0.9)`; rg.font = `500 ${Math.round(Math.max(11, R * 0.07))}px "Exo 2", sans-serif`; rg.fillText('ENERGY SENT', rc, rc + R * 0.18)
   }
 
   const t0 = performance.now()

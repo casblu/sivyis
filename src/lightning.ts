@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-/** BTC-send "lightning strike": jagged branching bolts + flash around a star. Self-cleaning. */
+/** Energy-zap lightning strike: jagged branching bolts + flash around a star. Self-cleaning. */
 type Strike = {
   group: THREE.Group
   bolts: { line: THREE.LineSegments; mat: THREE.LineBasicMaterial; delay: number; seed: number }[]
