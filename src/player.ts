@@ -22,6 +22,12 @@ export type PlayerHandlers = {
   onEnergy?: (artist: Artist, kind: EnergyKind) => void
 }
 
+function playRateLabel(): string {
+  const setting = wallet.playSetting()
+  if (!setting.enabled) return 'Energy off'
+  return `⚡ ${energyPhrase(setting.sats)} / play`
+}
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
@@ -349,7 +355,7 @@ export class MusicPlayer {
     const artist = this.artist
     const track = this.track()
     if (!artist || !track) {
-      ind.textContent = energyPhrase(wallet.playSetting().sats)
+      ind.textContent = playRateLabel()
       return
     }
     const album = albumForTrack(artist.baseId, track, artist.tracks)
@@ -367,7 +373,7 @@ export class MusicPlayer {
     const setting = wallet.playSetting()
     if (!setting.enabled) ind.textContent = 'Energy off'
     else if (this.energyNote) ind.textContent = this.energyNote
-    else ind.textContent = energyPhrase(setting.sats)
+    else ind.textContent = playRateLabel()
   }
 
   private energyNote = ''
@@ -423,7 +429,7 @@ export class MusicPlayer {
       pop.innerHTML = `
         <p class="kicker">Zap ${escapeHtml(artist.name)}</p>
         <div class="zap-presets">
-          ${ZAP_PRESETS.map((n) => `<button type="button" class="player-chip${n === picked ? ' on' : ''}" data-sats="${n}">${n.toLocaleString('en-US')}</button>`).join('')}
+          ${ZAP_PRESETS.map((n) => `<button type="button" class="player-chip${n === picked ? ' on' : ''}" data-sats="${n}">${escapeHtml(energyPhrase(n))}</button>`).join('')}
         </div>
         <label class="energy-amt">Custom
           <input id="zap-custom" type="number" min="1" step="1" inputmode="numeric" placeholder="sats" aria-label="Custom sats of Energy" />

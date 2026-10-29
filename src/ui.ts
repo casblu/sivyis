@@ -529,7 +529,7 @@ export class UI {
         </div>
         <p class="send-hint">Your balance: <span id="send-user-bal">${escapeHtml(energyPhrase(wallet.userSats))}</span></p>
         <div class="zap-presets">
-          ${ZAP_PRESETS.map((n) => `<button type="button" class="player-chip${n === picked ? ' on' : ''}" data-sats="${n}">${n.toLocaleString('en-US')}</button>`).join('')}
+          ${ZAP_PRESETS.map((n) => `<button type="button" class="player-chip${n === picked ? ' on' : ''}" data-sats="${n}">${escapeHtml(energyPhrase(n))}</button>`).join('')}
         </div>
         <label class="energy-amt">Custom
           <input id="zap-custom" type="number" min="1" step="1" inputmode="numeric" placeholder="sats" aria-label="Custom sats of Energy" />
