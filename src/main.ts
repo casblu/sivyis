@@ -109,7 +109,7 @@ ui.onToggleMode = () => {
   if (fly.navMode === 'fly') {
     fly.returnToOverview()
   } else {
-    fly.enterFly({ lock: !fly.isTouch })
+    fly.enterFly({ lock: true })
     ui.setNavMode('fly')
   }
 }
@@ -159,6 +159,11 @@ fly.onModeChange = (mode) => {
   if (mode === 'overview') {
     ui.hidePanel()
     galaxy.setSelected(null)
+    ui.showRecapture(false)
+  } else {
+    requestAnimationFrame(() => {
+      ui.showRecapture(fly.navMode === 'fly' && fly.finePointer && !fly.pointerLocked)
+    })
   }
 }
 
@@ -222,8 +227,13 @@ canvas.addEventListener('click', (e) => {
 })
 
 document.addEventListener('pointerlockchange', () => {
-  if (!running || fly.isTouch) return
+  if (!running || !fly.finePointer) return
   ui.showRecapture(fly.navMode === 'fly' && !fly.pointerLocked)
+})
+
+document.addEventListener('pointerlockerror', () => {
+  if (!running || !fly.finePointer) return
+  ui.showRecapture(fly.navMode === 'fly')
 })
 
 window.addEventListener('keydown', (e) => {
@@ -247,7 +257,7 @@ window.addEventListener('keydown', (e) => {
   }
   if ((e.key === 'o' || e.key === 'O') && running) {
     if (fly.navMode === 'fly') fly.returnToOverview()
-    else fly.enterFly({ lock: !fly.isTouch })
+    else fly.enterFly({ lock: true })
   }
 })
 

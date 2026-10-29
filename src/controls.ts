@@ -60,6 +60,10 @@ type Flight = {
  * - Pinch          → zoom (dolly toward/away), clamped
  * - 2-finger drag  → lateral pan in the view plane (Earth-like “slide”)
  * Plus Overview (auto-orbit) ↔ Fly modes with Look At / Fly To search jumps.
+ *
+ * Desktop fly: mouse looks up/down (pitch) and left/right (yaw). Click the
+ * view (or press a fly key) to capture the cursor via the Pointer Lock API.
+ * Esc releases it. Touch drag / pinch / two-finger pan are unchanged.
  */
 export class FlyControls {
   camera: THREE.PerspectiveCamera
@@ -72,6 +76,8 @@ export class FlyControls {
   pointerLocked = false
   thrusting = false
   isTouch = false
+  /** Primary pointer is a mouse — enables pointer-lock look even on touch laptops. */
+  finePointer = false
   navMode: NavMode = 'overview'
 
   onTap: ((result: TapResult) => void) | null = null
@@ -106,6 +112,8 @@ export class FlyControls {
   private lastTapAt = 0
   private lastTapX = 0
   private lastTapY = 0
+  /** First locked mousemove is often a huge jump — drop it. */
+  private ignoreLookBurst = false
 
   private flight: Flight | null = null
   private overviewYaw = 0
@@ -116,7 +124,12 @@ export class FlyControls {
   constructor(camera: THREE.PerspectiveCamera, dom: HTMLElement) {
     this.camera = camera
     this.dom = dom
-    this.isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window
+    const fine = matchMedia('(pointer: fine)').matches || matchMedia('(any-pointer: fine)').matches
+    const coarse = matchMedia('(pointer: coarse)').matches
+    this.isTouch = coarse || 'ontouchstart' in window
+    // Phones are coarse-only. Desktops, including touch laptops and browsers that
+    // don't advertise `pointer: fine`, still get mouse look.
+    this.finePointer = fine || !coarse
 
     // Preserve scene camera pose (starts inside hollow genre ball looking outward).
     const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ')
@@ -128,9 +141,19 @@ export class FlyControls {
   }
 
   lock(): void {
-    if (this.isTouch) return
+    if (!this.finePointer) return
     if (this.navMode !== 'fly') return
-    this.dom.requestPointerLock()
+    if (document.pointerLockElement === this.dom) return
+    try {
+      const req = this.dom.requestPointerLock() as void | Promise<void>
+      if (req && typeof (req as Promise<void>).catch === 'function') {
+        void (req as Promise<void>).catch(() => {
+          /* Denied, or the browser wants a click. The view click path retries. */
+        })
+      }
+    } catch {
+      /* No user activation — caller can retry from a click. */
+    }
   }
 
   unlock(): void {
@@ -148,7 +171,7 @@ export class FlyControls {
   /** Enter free-fly exploration (Earth-style touch + WASD). */
   enterFly(opts?: { lock?: boolean }): void {
     if (this.navMode === 'fly' && !this.flight) {
-      if (opts?.lock && !this.isTouch) this.lock()
+      if (opts?.lock) this.lock()
       return
     }
     this.cancelFlight()
@@ -158,7 +181,7 @@ export class FlyControls {
     this.pitchVel = 0
     this.syncYawPitchFromCamera()
     this.onModeChange?.('fly')
-    if (opts?.lock && !this.isTouch) this.lock()
+    if (opts?.lock) this.lock()
   }
 
   /** Instantly place camera at overview orbit (no flight). */
@@ -200,7 +223,8 @@ export class FlyControls {
 
   /** Ease camera orientation to face an artist (stays roughly in place). */
   lookAtArtist(target: THREE.Vector3, onDone?: () => void): void {
-    if (this.navMode === 'overview') this.enterFly()
+    if (this.navMode === 'overview') this.enterFly({ lock: true })
+    else this.lock()
     const from = this.camera.position.clone()
     const dir = this.tmpLook.subVectors(target, from)
     if (dir.lengthSq() < 1e-6) {
@@ -234,6 +258,7 @@ export class FlyControls {
       this.navMode = 'fly'
       this.onModeChange?.('fly')
     }
+    this.lock()
     const from = this.camera.position.clone()
     const dir = new THREE.Vector3().subVectors(from, target)
     if (dir.lengthSq() < 1e-6) dir.set(0, 0.25, 1)
@@ -274,6 +299,7 @@ export class FlyControls {
       this.navMode = 'fly'
       this.onModeChange?.('fly')
     }
+    this.lock()
     const dir = new THREE.Vector3().subVectors(this.camera.position, target)
     if (dir.lengthSq() < 1e-6) dir.set(0, 0.2, 1)
     dir.normalize()
@@ -306,8 +332,12 @@ export class FlyControls {
       return
     }
 
-    // Look inertia (Earth-style momentum after one-finger drag)
-    if (this.mode !== 'orbit' && (Math.abs(this.yawVel) > LOOK_INERTIA_STOP || Math.abs(this.pitchVel) > LOOK_INERTIA_STOP)) {
+    // Look inertia (Earth-style momentum after one-finger drag).
+    // While the mouse is captured, only the pointer drives pitch and yaw.
+    if (this.pointerLocked) {
+      this.yawVel = 0
+      this.pitchVel = 0
+    } else if (this.mode !== 'orbit' && (Math.abs(this.yawVel) > LOOK_INERTIA_STOP || Math.abs(this.pitchVel) > LOOK_INERTIA_STOP)) {
       const k = Math.min(3, dt * 60)
       this.yaw += this.yawVel * k
       this.pitch += this.pitchVel * k
@@ -364,7 +394,8 @@ export class FlyControls {
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('keyup', this.onKeyUp)
     document.removeEventListener('pointerlockchange', this.onLockChange)
-    this.dom.removeEventListener('mousemove', this.onMouseMove)
+    document.removeEventListener('pointerlockerror', this.onLockError)
+    document.removeEventListener('mousemove', this.onMouseMove, true)
     this.dom.removeEventListener('wheel', this.onWheel)
     this.dom.removeEventListener('pointerdown', this.onPointerDown)
     window.removeEventListener('pointerup', this.onPointerUp)
@@ -523,7 +554,8 @@ export class FlyControls {
     document.addEventListener('keydown', this.onKeyDown)
     document.addEventListener('keyup', this.onKeyUp)
     document.addEventListener('pointerlockchange', this.onLockChange)
-    this.dom.addEventListener('mousemove', this.onMouseMove)
+    document.addEventListener('pointerlockerror', this.onLockError)
+    document.addEventListener('mousemove', this.onMouseMove, true)
     this.dom.addEventListener('wheel', this.onWheel, { passive: false })
     this.dom.addEventListener('pointerdown', this.onPointerDown)
     window.addEventListener('pointerup', this.onPointerUp)
@@ -543,7 +575,7 @@ export class FlyControls {
     if (this.navMode === 'overview' && this.enabled) {
       const k = e.key.toLowerCase()
       if (k === 'w' || k === 'a' || k === 's' || k === 'd' || k === 'q' || k === 'e') {
-        this.enterFly({ lock: !this.isTouch })
+        this.enterFly({ lock: true })
       }
     }
   }
@@ -556,15 +588,31 @@ export class FlyControls {
 
   private onLockChange = (): void => {
     this.pointerLocked = document.pointerLockElement === this.dom
+    if (this.pointerLocked) {
+      this.ignoreLookBurst = true
+      this.yawVel = 0
+      this.pitchVel = 0
+      this.mode = 'none'
+    }
+  }
+
+  private onLockError = (): void => {
+    this.pointerLocked = false
   }
 
   private onMouseMove = (e: MouseEvent): void => {
-    if (!this.enabled) return
-    if (!this.pointerLocked) return
-    if (this.navMode !== 'fly') return
-    // Desktop mouse look: reversed per Txai (Oct 2026)
-    this.pendYaw -= e.movementX * LOOK_SENS
-    this.pendPitch -= e.movementY * LOOK_SENS
+    if (!this.enabled || !this.pointerLocked || !this.finePointer) return
+    if (this.navMode !== 'fly' || this.flight) return
+    if (this.ignoreLookBurst) {
+      this.ignoreLookBurst = false
+      return
+    }
+    const mx = Math.max(-90, Math.min(90, e.movementX || 0))
+    const my = Math.max(-90, Math.min(90, e.movementY || 0))
+    if (mx === 0 && my === 0) return
+    // Desktop mouse look: reversed per Txai (Oct 2026). Both axes — pitch and yaw.
+    this.pendYaw -= mx * LOOK_SENS
+    this.pendPitch -= my * LOOK_SENS
   }
 
   private onWheel = (e: WheelEvent): void => {
@@ -593,6 +641,16 @@ export class FlyControls {
     if (t && t !== this.dom && !this.dom.contains(t)) return
 
     this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    // Click (or press) the view in fly mode to capture the mouse for free look.
+    if (
+      e.pointerType === 'mouse' &&
+      this.navMode === 'fly' &&
+      this.finePointer &&
+      !this.pointerLocked &&
+      !this.flight
+    ) {
+      this.lock()
+    }
     if (this.pointerLocked) return
 
     if (this.pointers.size === 1) {

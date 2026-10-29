@@ -845,14 +845,14 @@ function layout(): string {
 
   <div id="gesture-hint" role="status">
     <p><strong>Fly</strong> the galaxy — drag to look · pinch to zoom · tap a star</p>
-    <p class="sub">Search → Look At / Fly To · WASD on desktop</p>
+    <p class="sub">Search → Look At / Fly To · WASD · click the view to mouse-look (up, down, turn) · Esc releases</p>
   </div>
 
   <footer id="hints" class="desktop-only">
     <div><kbd>WASD</kbd> fly</div>
     <div><kbd>QE</kbd> up / down</div>
     <div><kbd>Shift</kbd> boost</div>
-    <div><kbd>Mouse</kbd> look</div>
+    <div><kbd>Mouse</kbd> look up/down &amp; turn (click to capture)</div>
     <div><kbd>Click</kbd> star profile</div>
     <div><kbd>Esc</kbd> free cursor</div>
   </footer>
