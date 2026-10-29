@@ -1,5 +1,5 @@
-import { playScreenZap, ZAP_HOLD_MS, ZAP_FADE_MS } from './screenZap'
 import { ARTISTS } from "./artists.ts"
+import { wallet } from './wallet.ts'
 import './style.css'
 import * as THREE from 'three'
 import {
@@ -91,6 +91,10 @@ const player = new MusicPlayer(playerHost, {
     void audio.start()
     audio.playTrackCue(artist, index)
   },
+  onEnergy: (artist, kind) => {
+    galaxy.pulseEnergy(artist.id, kind)
+    galaxy.syncEnergy(wallet.receivedMap())
+  },
   onRealAudioStart: () => {
     void audio.start()
     audio.stopAll()
@@ -122,19 +126,12 @@ ui.onLookAt = (artist) => {
   ui.fadeGestureHint()
 }
 
-ui.onSendBtc = (artist) => {
-  // Full-screen profile hides the star; on zap the profile turns translucent so the star shines through.
-  const panel = document.getElementById('panel')
-  galaxy.setViewShift(0, 0)
-  tmpArtistPos.set(...artist.position)
-  fly.lookAtArtist(tmpArtistPos.clone())
-  panel?.classList.add('zapping')
-  // Profile fades back in (CSS opacity, ease-out cubic) at the same time the lightning fades out.
-  window.setTimeout(() => { panel?.classList.add('settling'); panel?.classList.remove('zapping') }, ZAP_HOLD_MS)
-  window.setTimeout(() => { panel?.classList.remove('settling') }, ZAP_HOLD_MS + ZAP_FADE_MS + 100)
-  galaxy.zapArtist(artist.id)
-  playScreenZap({ color: artist.color, name: artist.name })
+ui.onEnergy = (artist, kind) => {
+  galaxy.pulseEnergy(artist.id, kind)
+  galaxy.syncEnergy(wallet.receivedMap())
 }
+galaxy.syncEnergy(wallet.receivedMap())
+wallet.subscribe(() => galaxy.syncEnergy(wallet.receivedMap()))
 ;(window as unknown as { __sivyis?: unknown }).__sivyis = { galaxy, fly, zap: (id: string) => galaxy.zapArtist(id), open: (id: string) => { const a = ARTISTS.find((x) => x.id === id); if (a) openArtist(a) } }
 
 ui.onFlyTo = (artist) => {

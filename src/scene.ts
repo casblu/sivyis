@@ -19,6 +19,7 @@ import { GENRE_NEBULA_PHOTO } from './nebulaPhotos.ts'
 import { LightningFX } from './lightning.ts'
 import { stageTexture } from './stellarStages.ts'
 import { buildSkeleton, maskBank, puffTexture, dustTexture, rng, type SkelPoint } from './nebulaShape.ts'
+import { brightnessWithEnergy, energyGlow } from './energy.ts'
 
 
 /**
@@ -99,6 +100,10 @@ export type StarHandle = {
   genreRadius: number
   /** Cached artist.brightness (void dim / zap-energy brighter new stars). */
   baseBrightness: number
+  /** 0..1 fan-Energy standout. Slow-start; does not include the seeded demo balance. */
+  energyGlow: number
+  /** Brief pulse after Energy is sent. Decays quickly. */
+  energyPulse: number
 }
 
 export type NebulaHandle = {
@@ -611,6 +616,28 @@ export class GalaxyScene {
     return out.copy(h.group.position)
   }
 
+  /** Apply fan Energy (plays, zaps, albums) on top of zap-interest brightness. */
+  syncEnergy(satsByBase: Record<string, number>): void {
+    for (const star of this.stars) {
+      const sats = satsByBase[star.artist.baseId] ?? 0
+      star.energyGlow = energyGlow(sats)
+    }
+  }
+
+  /**
+   * Short glow when Energy is sent.
+   * Plays stay very small; zaps and album purchases are a little stronger, still brief.
+   */
+  pulseEnergy(id: string, kind: 'play' | 'zap' | 'album' = 'play'): void {
+    const base = baseArtistId(id)
+    const amp = kind === 'play' ? 0.16 : 0.4
+    for (const star of this.stars) {
+      if (star.artist.baseId === base || star.artist.id === id) {
+        star.energyPulse = Math.max(star.energyPulse, amp)
+      }
+    }
+  }
+
   /** BTC send: violent star shake, then lightning burst + thunder. */
   zapArtist(id: string): void {
     const base = baseArtistId(id)
@@ -861,8 +888,14 @@ export class GalaxyScene {
       const dist = cam.distanceTo(star.group.position)
       const close = starCloseFactor(dist)
       // Far: readable orb. Very close: tiny sharp emissive spark (not a solid planet).
+      if (star.energyPulse > 0) {
+        star.energyPulse *= Math.exp(-3.6 * this.lastDt)
+        if (star.energyPulse < 0.01) star.energyPulse = 0
+      }
+      const energyPulse = 1 + star.energyPulse * 0.14
       const selMul = selected ? 1.4 : 1
-      const base = star.baseScale * selMul * pulse * ampPulse
+      const energyScale = 1 + star.energyPulse * 0.03
+      const base = star.baseScale * selMul * pulse * ampPulse * energyScale
       const coreMul = 1 + (STAR_CLOSE_CORE_MUL - 1) * close
       const shellMul = 1 + (STAR_CLOSE_SHELL_MUL - 1) * close
       const haloMul = 1 + (STAR_CLOSE_HALO_MUL - 1) * close
@@ -877,13 +910,13 @@ export class GalaxyScene {
       // Outer shells/halos fade faster than core so mist + spark dominate close-up
       const shellFade = 1 - close * 0.92
       const haloFade = 1 - close * 0.97
-      const bright = star.baseBrightness
-      shellMat.opacity = (selected ? 0.22 : 0.14) * pulse * amp * shellFade * (0.55 + bright * 0.45)
-      glowMat.opacity = (selected ? 0.1 : 0.055) * pulse * amp * haloFade * (0.5 + bright * 0.5)
+      const bright = brightnessWithEnergy(star.baseBrightness, star.energyGlow)
+      shellMat.opacity = (selected ? 0.22 : 0.14) * pulse * amp * shellFade * (0.55 + bright * 0.45) * energyPulse
+      glowMat.opacity = (selected ? 0.1 : 0.055) * pulse * amp * haloFade * (0.5 + bright * 0.5) * energyPulse
       // Slightly punchier emissive core when shrunk to a spark (still cinematic, not bloom-wash)
       const coreMat = star.core.material as unknown as SoftGlowMaterial
-      // Void/dormant stay dim; popular new (high zapEnergy → brightness) glow more among protostars
-      coreMat.emissiveIntensity = (0.55 + bright * 1.35) + close * 0.55 * bright
+      // Base keeps zap-interest (new stars) and dim dormant stars. Fan Energy lifts slowly on top.
+      coreMat.emissiveIntensity = ((0.55 + bright * 1.35) + close * 0.55 * bright) * energyPulse
       coreMat.opacity = vis * (0.45 + bright * 0.55)
       if (star.memorialHalo) {
         // Gentle two-frequency shimmer; brighter and readable from far zoom.
@@ -1526,6 +1559,8 @@ export class GalaxyScene {
         genreCenter: new THREE.Vector3(...GENRE_BY_ID[artist.genreId].center),
         genreRadius: GENRE_BY_ID[artist.genreId].radius * (artist.voidStar ? 1.35 : 1),
         baseBrightness: bright,
+        energyGlow: 0,
+        energyPulse: 0,
       }
       this.stars.push(handle)
       this.starById.set(artist.id, handle)

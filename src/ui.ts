@@ -1,4 +1,3 @@
-import { mountSlideConfirm } from './slideConfirm'
 import {
   ARTIST_PROFILES,
   ARTISTS,
@@ -13,7 +12,8 @@ import type { NavMode } from './controls.ts'
 import { philosophyPageHtml } from './philosophy.ts'
 import { mountPhilosophyWeb, type PhilosophyWebHandle } from './philosophyWeb.ts'
 import { mountMusicHistory, type MusicHistoryHandle } from './musicHistory.ts'
-import { formatBtc, formatSats, timeAgo, wallet, type WalletTx } from './wallet.ts'
+import { albumsFor, energyPhrase, ZAP_PRESETS } from './energy.ts'
+import { timeAgo, wallet, type WalletTx } from './wallet.ts'
 import { memorialYears } from './memorials.ts'
 import artistPhotos from './artistPhotos.json'
 
@@ -59,7 +59,7 @@ export class UI {
   onToggleMode: (() => void) | null = null
   onLookAt: ((artist: Artist) => void) | null = null
   onFlyTo: ((artist: Artist) => void) | null = null
-  onSendBtc: ((artist: Artist, amount: number) => void) | null = null
+  onEnergy: ((artist: Artist, kind: 'play' | 'zap' | 'album') => void) | null = null
   /** Called when switching tabs; galaxy should pause pointer lock etc. */
   onTabChange: ((tab: AppTab) => void) | null = null
 
@@ -412,13 +412,16 @@ export class UI {
 
       <div class="artist-wallet-card" id="artist-wallet-card">
         <div>
-          <span class="kicker">Support ${escapeHtml(artist.name)}</span>
-          ${artist.showBalance ? `<strong id="artist-btc-bal">${formatBtc(wallet.artistBalance(artist.id))}</strong>` : '<strong class="bal-private">⚡ Zap with demo BTC</strong>'}
+          <span class="kicker">Energy received</span>
+          <strong id="artist-energy-received">${escapeHtml(energyPhrase(wallet.receivedSats(artist.baseId)))}</strong>
         </div>
-        <button type="button" class="btc-send-btn" id="open-send-btc">Send BTC</button>
+        <button type="button" class="btc-send-btn" id="open-zap">Zap</button>
       </div>
+      <div class="send-btc-form hidden" id="zap-panel"></div>
 
-      <div class="send-btc-form hidden" id="send-btc-form"></div>
+      <h3>Albums</h3>
+      <ul class="album-list" id="album-list">${this.albumRows(artist)}</ul>
+      <div class="send-btc-form hidden" id="album-confirm"></div>
 
       <h3>Store &amp; merch</h3>
       <ul class="link-list">${storeLinks}</ul>
@@ -460,12 +463,14 @@ export class UI {
       })
     })
 
-    const form = must(this.panel, '#send-btc-form')
-    must(this.panel, '#open-send-btc').addEventListener('click', () => {
-      // Always a fresh slider when (re)opening the send section.
-      this.renderSendSection(artist, form)
-      form.classList.remove('hidden')
-      form.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    const zapPanel = must(this.panel, '#zap-panel')
+    must(this.panel, '#open-zap').addEventListener('click', () => {
+      this.renderZapPanel(artist, zapPanel)
+      zapPanel.classList.remove('hidden')
+      zapPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    })
+    must(this.panel, '#album-list').querySelectorAll<HTMLButtonElement>('[data-album]').forEach((btn) => {
+      btn.addEventListener('click', () => this.renderAlbumConfirm(artist, btn.dataset.album || ''))
     })
 
     must(this.panel, '#panel-body').querySelectorAll<HTMLButtonElement>('[data-related]').forEach((btn) => {
@@ -497,63 +502,126 @@ export class UI {
     must(this.root, '#wallet-backdrop').classList.remove('open')
   }
 
-  private txRows(txs: WalletTx[], withArtist: boolean): string {
-    if (!txs.length) return '<p class="muted-line">No zaps yet.</p>'
-    return `<ul class="tx-list">${txs.map((t) => `<li><span>⚡ ${withArtist ? escapeHtml(t.note) + ' · ' : ''}${timeAgo(t.at)}</span><b>${t.kind === 'fund' ? '+' : '−'}${formatSats(t.amount)}</b></li>`).join('')}</ul>`
+  private albumRows(artist: Artist): string {
+    return albumsFor(artist.baseId, artist.tracks).map((album) => {
+      const owned = wallet.ownsAlbum(artist.baseId, album.key)
+      return `<li>
+        <span><b>${escapeHtml(album.name)}</b><i>${album.trackCount} track${album.trackCount === 1 ? '' : 's'}</i></span>
+        ${owned
+          ? '<em class="owned-pill">Owned</em>'
+          : `<button type="button" class="btc-send-btn" data-album="${escapeHtml(album.key)}">Buy · ${escapeHtml(energyPhrase(album.priceSats))}</button>`}
+      </li>`
+    }).join('')
   }
 
-  private renderSendSection(artist: Artist, form: HTMLElement): void {
-    let sending = false
+  private txRows(txs: WalletTx[], withArtist: boolean): string {
+    if (!txs.length) return '<p class="muted-line">No Energy sent yet.</p>'
+    return `<ul class="tx-list">${txs.map((t) => `<li><span>⚡ ${withArtist ? escapeHtml(t.note) + ' · ' : ''}${timeAgo(t.at)}</span><b>${t.kind === 'fund' ? '+' : '−'}${escapeHtml(energyPhrase(t.amount))}</b></li>`).join('')}</ul>`
+  }
+
+  private renderZapPanel(artist: Artist, form: HTMLElement): void {
+    let picked: number = ZAP_PRESETS[1]
+    const draw = () => {
+      form.innerHTML = `
+        <div class="send-head">
+          <p class="kicker">Zap Energy · simulated</p>
+          <button type="button" class="send-close" id="zap-close" aria-label="Close zap">×</button>
+        </div>
+        <p class="send-hint">Your balance: <span id="send-user-bal">${escapeHtml(energyPhrase(wallet.userSats))}</span></p>
+        <div class="zap-presets">
+          ${ZAP_PRESETS.map((n) => `<button type="button" class="player-chip${n === picked ? ' on' : ''}" data-sats="${n}">${n.toLocaleString('en-US')}</button>`).join('')}
+        </div>
+        <label class="energy-amt">Custom
+          <input id="zap-custom" type="number" min="1" step="1" inputmode="numeric" placeholder="sats" aria-label="Custom sats of Energy" />
+        </label>
+        <p class="send-hint" id="zap-preview">Send ${escapeHtml(energyPhrase(picked))}</p>
+        <p class="demo-note">Nothing is sent until you confirm. This does not move real bitcoin.</p>
+        <div class="energy-actions">
+          <button type="button" id="zap-confirm" class="btc-send-btn">Send Energy</button>
+        </div>
+        <p class="send-status" id="zap-status" role="status"></p>
+        <div class="send-recent">
+          <p class="kicker">Your Energy to ${escapeHtml(artist.name)}</p>
+          <div id="send-recent-list">${this.txRows(wallet.txsToArtist(artist.baseId), false)}</div>
+          <button type="button" class="link-btn" id="view-all-tx">View all history →</button>
+        </div>`
+      must(form, '#zap-close').addEventListener('click', () => { form.classList.add('hidden'); form.innerHTML = '' })
+      must(form, '#view-all-tx').addEventListener('click', () => this.openTxHistory())
+      form.querySelectorAll<HTMLButtonElement>('[data-sats]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          picked = Number(btn.dataset.sats)
+          draw()
+        })
+      })
+      const custom = must(form, '#zap-custom') as HTMLInputElement
+      custom.addEventListener('input', () => {
+        const n = Math.round(Number(custom.value))
+        if (n >= 1) {
+          picked = n
+          must(form, '#zap-preview').textContent = `Send ${energyPhrase(n)}`
+          form.querySelectorAll('[data-sats]').forEach((b) => b.classList.remove('on'))
+        }
+      })
+      must(form, '#zap-confirm').addEventListener('click', () => {
+        const result = wallet.zap(artist.baseId, artist.name, picked)
+        const status = must(form, '#zap-status')
+        if (!result.ok) {
+          status.textContent = result.error
+          status.classList.add('err')
+          return
+        }
+        status.classList.remove('err')
+        status.textContent = `Sent ${energyPhrase(result.sats)}`
+        must(form, '#zap-confirm').setAttribute('disabled', 'true')
+        this.refreshArtistWalletBits(artist)
+        const recent = form.querySelector('#send-recent-list')
+        if (recent) recent.innerHTML = this.txRows(wallet.txsToArtist(artist.baseId), false)
+        this.onEnergy?.(artist, 'zap')
+      })
+    }
+    draw()
+  }
+
+  private renderAlbumConfirm(artist: Artist, albumKey: string): void {
+    const form = must(this.panel, '#album-confirm')
+    const album = albumsFor(artist.baseId, artist.tracks).find((a) => a.key === albumKey)
+    if (!album) return
+    if (wallet.ownsAlbum(artist.baseId, album.key)) {
+      form.classList.add('hidden')
+      return
+    }
+    form.classList.remove('hidden')
     form.innerHTML = `
       <div class="send-head">
-        <p class="kicker">Send Bitcoin · demo only</p>
-        <button type="button" class="send-close" id="send-close" aria-label="Close send">×</button>
+        <p class="kicker">Confirm album purchase</p>
+        <button type="button" class="send-close" id="album-close" aria-label="Close purchase">×</button>
       </div>
-      <div id="send-live">
-        <p class="send-hint">Your balance: <span id="send-user-bal">${formatBtc(wallet.userBalance)}</span> · ${formatSats(wallet.userBalance)}</p>
-        <div class="send-row">
-          <input id="send-amount" type="number" inputmode="decimal" min="0.0001" step="0.001" value="0.001" aria-label="BTC amount" />
-          <select id="send-kind" aria-label="Payment type">
-            <option value="tip">Tip</option>
-            <option value="merch">Merch</option>
-            <option value="send">Payment</option>
-          </select>
-        </div>
-        <div id="confirm-send-btc"></div>
+      <p class="energy-album-name">${escapeHtml(album.name)}</p>
+      <p class="send-hint">${album.trackCount} tracks · ${escapeHtml(energyPhrase(album.priceSats))}</p>
+      <p class="demo-note">Simulated. Playback stays in Cosmoly. After you own it, those tracks are not charged per play. Zapping stays optional. The price counts as Energy on this star.</p>
+      <div class="energy-actions">
+        <button type="button" id="album-cancel" class="player-chip">Cancel</button>
+        <button type="button" id="album-confirm-btn" class="btc-send-btn">Confirm purchase</button>
       </div>
-      <p class="send-status" id="send-status" role="status"></p>
-      <div class="send-recent">
-        <p class="kicker">Your recent zaps to ${escapeHtml(artist.name)}</p>
-        <div id="send-recent-list">${this.txRows(wallet.txsToArtist(artist.id), false)}</div>
-        <button type="button" class="link-btn" id="view-all-tx">View all history →</button>
-      </div>`
-    must(form, '#send-close').addEventListener('click', () => { form.classList.add('hidden'); form.innerHTML = '' })
-    must(form, '#view-all-tx').addEventListener('click', () => this.openTxHistory())
-    mountSlideConfirm(must(form, '#confirm-send-btc'), () => {
-      if (sending) return
-      sending = true
-      const amount = Number((must(form, '#send-amount') as HTMLInputElement).value)
-      const kind = (must(form, '#send-kind') as HTMLSelectElement).value as 'tip' | 'merch' | 'send'
-      const result = wallet.sendToArtist(artist.id, artist.name, amount, kind)
-      const status = must(form, '#send-status')
-      if (result.ok) {
-        status.textContent = ''
-        // Replace the slider with a receipt; user must close & reopen to send again.
-        must(form, '#send-live').outerHTML = `
-          <div class="send-receipt" role="status">
-            <span class="receipt-bolt">⚡</span>
-            <div><strong>${formatBtc(amount)}</strong><small>${formatSats(amount)} sent to ${escapeHtml(artist.name)} (demo)</small></div>
-          </div>`
-        must(form, '#send-recent-list').innerHTML = this.txRows(wallet.txsToArtist(artist.id), false)
-        this.refreshArtistWalletBits(artist)
-        this.onSendBtc?.(artist, amount)
-      } else {
-        // fresh slider so the user can fix the amount and retry
-        this.renderSendSection(artist, form)
-        must(form, '#send-status').textContent = result.error
-        must(form, '#send-status').classList.add('err')
+      <p class="send-status" id="album-status" role="status"></p>`
+    form.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    const close = () => { form.classList.add('hidden'); form.innerHTML = '' }
+    must(form, '#album-close').addEventListener('click', close)
+    must(form, '#album-cancel').addEventListener('click', close)
+    must(form, '#album-confirm-btn').addEventListener('click', () => {
+      const result = wallet.buyAlbum(artist.baseId, artist.name, album.key, artist.tracks)
+      const status = must(form, '#album-status')
+      if (!result.ok) {
+        status.textContent = result.error
+        status.classList.add('err')
+        return
       }
-    }, 'Slide to send', true)
+      status.classList.remove('err')
+      status.textContent = `Owned · ${energyPhrase(result.sats)}`
+      must(form, '#album-confirm-btn').setAttribute('disabled', 'true')
+      this.refreshArtistWalletBits(artist)
+      this.onEnergy?.(artist, 'album')
+    })
   }
 
   openTxHistory(): void {
@@ -564,17 +632,24 @@ export class UI {
     el.setAttribute('aria-label', 'Transaction history')
     el.innerHTML = `
       <div class="txh-head"><h2>Transaction history</h2><button type="button" class="send-close" aria-label="Close history">×</button></div>
-      <p class="demo-badge">Demo wallet · newest first · saved on this device</p>
+      <p class="demo-badge">Simulated Energy · newest first · saved on this device</p>
       ${this.txRows(wallet.allTxs(), true)}`
     el.querySelector('.send-close')!.addEventListener('click', () => el.remove())
     document.body.appendChild(el)
   }
 
   private refreshArtistWalletBits(artist: Artist): void {
-    const bal = this.panel.querySelector('#artist-btc-bal')
-    if (bal && artist.showBalance) bal.textContent = formatBtc(wallet.artistBalance(artist.id))
+    const bal = this.panel.querySelector('#artist-energy-received')
+    if (bal) bal.textContent = energyPhrase(wallet.receivedSats(artist.baseId))
     const userBal = this.panel.querySelector('#send-user-bal')
-    if (userBal) userBal.textContent = formatBtc(wallet.userBalance)
+    if (userBal) userBal.textContent = energyPhrase(wallet.userSats)
+    const list = this.panel.querySelector('#album-list')
+    if (list) {
+      list.innerHTML = this.albumRows(artist)
+      list.querySelectorAll<HTMLButtonElement>('[data-album]').forEach((btn) => {
+        btn.addEventListener('click', () => this.renderAlbumConfirm(artist, btn.dataset.album || ''))
+      })
+    }
   }
 
   private renderWallet(): void {
@@ -582,34 +657,43 @@ export class UI {
     const txs = wallet.recentTxs(10)
     const txHtml =
       txs.length === 0
-        ? `<p class="muted-line">No demo transactions yet. Fund your wallet or tip an artist.</p>`
+        ? `<p class="muted-line">No Energy yet. Add simulated Energy, or play, zap, or buy an album.</p>`
         : `<ul class="tx-list">${txs
             .map(
               (t) =>
-                `<li><span>${escapeHtml(t.note)}</span><b>${t.kind === 'fund' ? '+' : '−'}${formatSats(t.amount)}</b></li>`,
+                `<li><span>${escapeHtml(t.note)}</span><b>${t.kind === 'fund' ? '+' : '−'}${escapeHtml(energyPhrase(t.amount))}</b></li>`,
             )
             .join('')}</ul>`
+    const setting = wallet.playSetting()
 
     body.innerHTML = `
-      <p class="demo-badge">Demo wallet · no real Bitcoin · localStorage only</p>
+      <p class="demo-badge">Simulated Energy · no real bitcoin · saved on this device</p>
       <p class="kicker">Your balance</p>
-      <p class="wallet-balance" id="user-btc-display">${formatBtc(wallet.userBalance)}</p><p class="wallet-sats">${formatSats(wallet.userBalance)}</p>
+      <p class="wallet-balance" id="user-btc-display">${wallet.userSats.toLocaleString('en-US')}</p>
+      <p class="wallet-sats">${wallet.userSats === 1 ? 'sat of Energy' : 'sats of Energy'}</p>
       <div class="fund-row">
-        <input id="fund-amount" type="number" inputmode="decimal" min="0.001" step="0.01" value="0.01" aria-label="Fund amount" />
-        <button type="button" id="fund-btc" class="btc-confirm">Fund (mock)</button>
+        <input id="fund-amount" type="number" inputmode="numeric" min="1" step="1" value="100000" aria-label="Energy amount in sats" />
+        <button type="button" id="fund-btc" class="btc-confirm">Add Energy</button>
       </div>
       <p class="send-status" id="fund-status" role="status"></p>
+      <h3>Per play</h3>
+      <label class="energy-check"><input id="wallet-play-on" type="checkbox" ${setting.enabled ? 'checked' : ''} /> Send Energy each play</label>
+      <label class="energy-amt">Amount
+        <input id="wallet-play-sats" type="number" min="1" step="1" inputmode="numeric" value="${setting.sats}" aria-label="Sats of Energy per play" />
+        <span>sats of Energy</span>
+      </label>
+      <button type="button" id="wallet-play-save" class="btc-send-btn">Save per-play</button>
       <h3>Recent activity</h3>
       ${txHtml}
-      <p class="muted-line">Tip artists from their profile · Send BTC updates both wallets.</p>
+      <p class="muted-line">Plays, zaps, and album purchases add Energy to that artist’s star. Owned albums are not charged per play.</p>
     `
 
     must(body, '#fund-btc').addEventListener('click', () => {
       const amount = Number((must(body, '#fund-amount') as HTMLInputElement).value)
-      const result = wallet.fund(amount)
+      const result = wallet.fundSats(amount)
       const status = must(body, '#fund-status')
       if (result.ok) {
-        status.textContent = `Funded ${formatBtc(amount)} (demo).`
+        status.textContent = `Added ${energyPhrase(amount)} (simulated).`
         status.classList.add('ok')
         status.classList.remove('err')
       } else {
@@ -618,6 +702,11 @@ export class UI {
         status.classList.remove('ok')
       }
     })
+    must(body, '#wallet-play-save').addEventListener('click', () => {
+      const enabled = (must(body, '#wallet-play-on') as HTMLInputElement).checked
+      const sats = Number((must(body, '#wallet-play-sats') as HTMLInputElement).value)
+      wallet.setPlaySetting({ enabled, sats })
+    })
   }
 
   private renderProfile(): void {
@@ -625,11 +714,11 @@ export class UI {
       <div class="profile-card">
         <p class="kicker">SIVYIS Corp</p>
         <h1>Your profile</h1>
-        <p class="bio">Explorer account for the Cosmoly music galaxy. Fly stars, study philosophy, and support artists with demo Bitcoin.</p>
+        <p class="bio">Explorer account for the Cosmoly music galaxy. Fly stars, study philosophy, and support artists with simulated Energy.</p>
         <div class="artist-wallet-card">
           <div>
-            <span class="kicker">Demo BTC balance</span>
-            <strong>${formatBtc(wallet.userBalance)}</strong>
+            <span class="kicker">Your Energy</span>
+            <strong>${escapeHtml(energyPhrase(wallet.userSats))}</strong>
           </div>
           <button type="button" class="btc-send-btn" id="profile-open-wallet">Wallet</button>
         </div>
@@ -639,7 +728,7 @@ export class UI {
           <li><button type="button" data-goto="philosophy">Music Philosophy &amp; Theory</button></li>
           <li><button type="button" data-goto="history">Music History timeline</button></li>
         </ul>
-        <p class="demo-note">Official spelling: Cosmoly (C-o-s-m-o-l-y), a SIVYIS Corp product. All payments are simulated.</p>
+        <p class="demo-note">Official spelling: Cosmoly (C-o-s-m-o-l-y), a SIVYIS Corp product. All Energy transfers are simulated.</p>
       </div>
     `
     must(this.profileView, '#profile-open-wallet').addEventListener('click', () => this.openWallet())
@@ -828,7 +917,7 @@ function layout(): string {
   </aside>
 
   <div id="hud-tools">
-    <button id="wallet-btn" type="button" aria-label="Open Bitcoin wallet">Wallet</button>
+    <button id="wallet-btn" type="button" aria-label="Open Energy wallet">Wallet</button>
     <button id="mode-toggle" type="button" aria-label="Enter fly exploration">Enter Fly</button>
     <button id="mute" type="button" aria-pressed="true">Sound on</button>
   </div>
@@ -866,10 +955,10 @@ function layout(): string {
   </aside>
 
   <div id="wallet-backdrop"></div>
-  <aside id="wallet-drawer" aria-hidden="true" aria-label="Bitcoin wallet">
+  <aside id="wallet-drawer" aria-hidden="true" aria-label="Energy wallet">
     <div class="wallet-head">
       <div>
-        <p class="kicker">Bitcoin</p>
+        <p class="kicker">Energy</p>
         <h2>Wallet</h2>
       </div>
       <button id="wallet-close" type="button" aria-label="Close wallet">×</button>
@@ -906,14 +995,14 @@ function layout(): string {
     <div class="gate-card">
       <p class="kicker">A SIVYIS Corp product · Music galaxy</p>
       <h1>Cosmoly</h1>
-      <p>Fly through the stars to discover artists. Each star is selectable — open profiles for store, merch, related links, and demo Bitcoin tips. Study music philosophy in the tab below, and keep your demo wallet ready.</p>
+      <p>Fly through the stars to discover artists. Each star is selectable — open profiles for store, merch, related links, and simulated Energy. Study music philosophy in the tab below, and keep your Energy wallet ready.</p>
       <p class="demo-note">Sample stars play generated demo cues. Stars badged <b>RSS · V4V</b> or <b>Nostr</b> are real independent artists from the open Bitcoin music web, streamed from their own feeds and relays.</p>
       <button id="enter" type="button">Enter the galaxy</button>
       <ul class="gate-keys">
         <li><strong>Galaxy:</strong> fly freely · tap stars for profiles</li>
         <li><strong>Philosophy:</strong> perception, theory, idea web</li>
         <li><strong>History:</strong> scrub eras · narrative · media receipts</li>
-        <li><strong>Wallet:</strong> demo BTC fund &amp; tip artists</li>
+        <li><strong>Wallet:</strong> simulated Energy · plays, zaps &amp; albums</li>
         <li><strong>Phone:</strong> drag look · pinch zoom · bottom nav</li>
       </ul>
     </div>
@@ -939,7 +1028,7 @@ function openPayHtml(artist: Artist): string {
     const r = pay.valueSplits.recipients
       .map((x) => `<li><b>${x.split}%</b> ${escapeHtml(x.name || x.type)} <code>${escapeHtml(x.address.slice(0, 18))}…</code></li>`)
       .join('')
-    rows.push(`<p class="kicker">Streaming sats / boosts (${escapeHtml(pay.valueSplits.method)} splits)</p><ul class="pay-list">${r}</ul>`)
+    rows.push(`<p class="kicker">Streaming Energy (${escapeHtml(pay.valueSplits.method)} splits, reference only)</p><ul class="pay-list">${r}</ul>`)
   }
   if (pay.lud16) rows.push(`<p class="kicker">Zap (NIP-57) Lightning address</p><p class="pay-target"><code>${escapeHtml(pay.lud16)}</code></p>`)
   else if (pay.nostrPubkey) rows.push(`<p class="kicker">Zap</p><p class="pay-target">No Lightning address on this Nostr profile yet.</p>`)
