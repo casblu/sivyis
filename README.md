@@ -60,11 +60,11 @@ Top-center search filters the current catalog (~72 artists).
 | Input | Action |
 | --- | --- |
 | Click **Enter the galaxy** | Start audio (Overview begins) |
-| **Enter Fly** then click canvas | Capture mouse look |
+| **Enter Fly** or **WASD** / **O**, then click the view if the cursor is still free | Capture mouse look |
 | **WASD** | Fly forward / left / back / right |
 | **Q** / **E** (or Ctrl / Space) | Down / up |
 | **Shift** | Boost (also widens spatial audio rolloff) |
-| **Mouse** | Look (pointer lock) |
+| **Mouse** (fly mode) | Free look: up/down (pitch) and left/right (yaw). Click the view to capture the cursor (Pointer Lock). **Esc** releases it. Drag still looks if capture is denied. |
 | **Scroll** (while locked) | Adjust cruise speed |
 | **Scroll** (unlocked) | Dolly zoom |
 | **Click a star** | Open profile |
