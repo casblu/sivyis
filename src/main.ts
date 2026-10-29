@@ -1,5 +1,5 @@
-import { playScreenZap, ZAP_HOLD_MS, ZAP_FADE_MS } from './screenZap'
 import { ARTISTS } from "./artists.ts"
+import { wallet } from './wallet.ts'
 import './style.css'
 import * as THREE from 'three'
 import {
@@ -13,7 +13,6 @@ import { FlyControls } from './controls.ts'
 import { GalaxyScene } from './scene.ts'
 import { UI } from './ui.ts'
 import { MusicPlayer } from './player.ts'
-import { formatEnergyText, wallet } from './wallet.ts'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) throw new Error('#app missing')
@@ -34,7 +33,6 @@ window.addEventListener(
     const nav = app.querySelector('#bottom-nav')
     const playerBar = app.querySelector('#player-bar')
     const playerLyrics = app.querySelector('#player-lyrics')
-    const playerZap = app.querySelector('#player-zap-sheet')
     if (panel?.classList.contains('open') && panel.contains(t)) return
     if (search?.contains(t)) return
     if (phil && !phil.classList.contains('hidden') && phil.contains(t)) return
@@ -44,7 +42,6 @@ window.addEventListener(
     if (nav?.contains(t)) return
     if (playerBar && !playerBar.classList.contains('hidden') && playerBar.contains(t)) return
     if (playerLyrics && !playerLyrics.classList.contains('hidden') && playerLyrics.contains(t)) return
-    if (playerZap && !playerZap.classList.contains('hidden') && playerZap.contains(t)) return
     e.preventDefault()
   },
   { passive: false },
@@ -56,22 +53,6 @@ if (!canvas) throw new Error('#view missing')
 canvas.tabIndex = 0
 
 const galaxy = new GalaxyScene(canvas)
-const refreshShine = (pulseId?: string) => {
-  galaxy.syncEnergy((artist) => wallet.energySats(artist.baseId), pulseId)
-}
-refreshShine()
-
-function playEnergyZap(artist: { id: string; baseId: string; name: string; color: number; position: [number, number, number] }): void {
-  const panel = document.getElementById('panel')
-  galaxy.setViewShift(0, 0)
-  tmpArtistPos.set(...artist.position)
-  fly.lookAtArtist(tmpArtistPos.clone())
-  panel?.classList.add('zapping')
-  window.setTimeout(() => { panel?.classList.add('settling'); panel?.classList.remove('zapping') }, ZAP_HOLD_MS)
-  window.setTimeout(() => { panel?.classList.remove('settling') }, ZAP_HOLD_MS + ZAP_FADE_MS + 100)
-  galaxy.zapArtist(artist.id)
-  playScreenZap({ color: artist.color, name: artist.name })
-}
 const fly = new FlyControls(galaxy.camera, canvas)
 fly.snapToOverview()
 const audio = new ProximityAudio()
@@ -110,27 +91,16 @@ const player = new MusicPlayer(playerHost, {
     void audio.start()
     audio.playTrackCue(artist, index)
   },
+  onEnergy: (artist, kind) => {
+    galaxy.pulseEnergy(artist.id, kind)
+    galaxy.syncEnergy(wallet.receivedMap())
+  },
   onRealAudioStart: () => {
     void audio.start()
     audio.stopAll()
   },
   onRealAudioEnd: () => {
     /* proximity ambience resumes via frame loop */
-  },
-  onPlayStart: (artist) => {
-    const settings = wallet.playSettings
-    if (!settings.enabled) return
-    const result = wallet.sendSats(artist.baseId, artist.name, settings.satsPerPlay, 'play')
-    if (result.ok) refreshShine(artist.baseId)
-    player.notifyEnergy(result.ok ? `Sent ${formatEnergyText(settings.satsPerPlay)}` : result.error, result.ok)
-  },
-  onZap: (artist, sats) => {
-    const result = wallet.sendSats(artist.baseId, artist.name, sats, 'zap')
-    if (result.ok) {
-      refreshShine(artist.baseId)
-      playEnergyZap(artist)
-    }
-    return result
   },
 })
 ui.onSelectTrack = (artist, index) => {
@@ -156,10 +126,12 @@ ui.onLookAt = (artist) => {
   ui.fadeGestureHint()
 }
 
-ui.onSendBtc = (artist) => {
-  refreshShine(artist.baseId)
-  playEnergyZap(artist)
+ui.onEnergy = (artist, kind) => {
+  galaxy.pulseEnergy(artist.id, kind)
+  galaxy.syncEnergy(wallet.receivedMap())
 }
+galaxy.syncEnergy(wallet.receivedMap())
+wallet.subscribe(() => galaxy.syncEnergy(wallet.receivedMap()))
 ;(window as unknown as { __sivyis?: unknown }).__sivyis = { galaxy, fly, zap: (id: string) => galaxy.zapArtist(id), open: (id: string) => { const a = ARTISTS.find((x) => x.id === id); if (a) openArtist(a) } }
 
 ui.onFlyTo = (artist) => {

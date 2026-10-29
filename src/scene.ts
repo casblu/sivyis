@@ -10,7 +10,6 @@ import {
   SUBGENRES,
   OVERVIEW_ORBIT_RADIUS,
   baseArtistId,
-  shineFromEnergy,
   type Artist,
   type Genre,
   type GenreId,
@@ -20,6 +19,7 @@ import { GENRE_NEBULA_PHOTO } from './nebulaPhotos.ts'
 import { LightningFX } from './lightning.ts'
 import { stageTexture } from './stellarStages.ts'
 import { buildSkeleton, maskBank, puffTexture, dustTexture, rng, type SkelPoint } from './nebulaShape.ts'
+import { brightnessWithEnergy, energyGlow } from './energy.ts'
 
 
 /**
@@ -98,10 +98,12 @@ export type StarHandle = {
   vis: number
   genreCenter: THREE.Vector3
   genreRadius: number
-  /** Cached luminosity (catalog glow + received Energy). */
+  /** Cached artist.brightness (void dim / zap-energy brighter new stars). */
   baseBrightness: number
-  /** 1 → 0 burst when Energy is sent, added on top of baseBrightness. */
-  energyFlash: number
+  /** 0..1 fan-Energy standout. Slow-start; does not include the seeded demo balance. */
+  energyGlow: number
+  /** Brief pulse after Energy is sent. Decays quickly. */
+  energyPulse: number
 }
 
 export type NebulaHandle = {
@@ -614,19 +616,29 @@ export class GalaxyScene {
     return out.copy(h.group.position)
   }
 
-  /**
-   * Recompute luminosity from Energy received (plays + zaps).
-   * Pass pulseId to briefly brighten that star.
-   */
-  syncEnergy(satsFor: (artist: Artist) => number, pulseId?: string | null): void {
-    const pulseBase = pulseId ? baseArtistId(pulseId) : null
-    for (const h of this.stars) {
-      h.baseBrightness = shineFromEnergy(h.artist, satsFor(h.artist))
-      if (pulseBase && h.artist.baseId === pulseBase) h.energyFlash = 1
+  /** Apply fan Energy (plays, zaps, albums) on top of zap-interest brightness. */
+  syncEnergy(satsByBase: Record<string, number>): void {
+    for (const star of this.stars) {
+      const sats = satsByBase[star.artist.baseId] ?? 0
+      star.energyGlow = energyGlow(sats)
     }
   }
 
-  /** Energy zap: violent star shake, then lightning burst + thunder. */
+  /**
+   * Short glow when Energy is sent.
+   * Plays stay very small; zaps and album purchases are a little stronger, still brief.
+   */
+  pulseEnergy(id: string, kind: 'play' | 'zap' | 'album' = 'play'): void {
+    const base = baseArtistId(id)
+    const amp = kind === 'play' ? 0.16 : 0.4
+    for (const star of this.stars) {
+      if (star.artist.baseId === base || star.artist.id === id) {
+        star.energyPulse = Math.max(star.energyPulse, amp)
+      }
+    }
+  }
+
+  /** BTC send: violent star shake, then lightning burst + thunder. */
   zapArtist(id: string): void {
     const base = baseArtistId(id)
     const handles = this.stars.filter((s) => s.artist.id === id || s.artist.baseId === base)
@@ -871,14 +883,19 @@ export class GalaxyScene {
         star.artist.baseId === this.selectedId || star.artist.id === this.selectedId
       const playing =
         star.artist.baseId === this.playingId || star.artist.id === this.playingId
-      if (star.energyFlash > 0) star.energyFlash = Math.max(0, star.energyFlash - this.lastDt * 1.45)
-      const ampPulse = (playing ? 1 + this.playingAmp * 0.55 : 1) * (1 + star.energyFlash * 0.28)
+      const ampPulse = playing ? 1 + this.playingAmp * 0.55 : 1
       const pulse = 0.92 + Math.sin(t * 2.1 + star.pulse) * 0.08
       const dist = cam.distanceTo(star.group.position)
       const close = starCloseFactor(dist)
       // Far: readable orb. Very close: tiny sharp emissive spark (not a solid planet).
+      if (star.energyPulse > 0) {
+        star.energyPulse *= Math.exp(-3.6 * this.lastDt)
+        if (star.energyPulse < 0.01) star.energyPulse = 0
+      }
+      const energyPulse = 1 + star.energyPulse * 0.14
       const selMul = selected ? 1.4 : 1
-      const base = star.baseScale * selMul * pulse * ampPulse
+      const energyScale = 1 + star.energyPulse * 0.03
+      const base = star.baseScale * selMul * pulse * ampPulse * energyScale
       const coreMul = 1 + (STAR_CLOSE_CORE_MUL - 1) * close
       const shellMul = 1 + (STAR_CLOSE_SHELL_MUL - 1) * close
       const haloMul = 1 + (STAR_CLOSE_HALO_MUL - 1) * close
@@ -893,13 +910,13 @@ export class GalaxyScene {
       // Outer shells/halos fade faster than core so mist + spark dominate close-up
       const shellFade = 1 - close * 0.92
       const haloFade = 1 - close * 0.97
-      const bright = Math.min(1, star.baseBrightness + star.energyFlash * 0.45)
-      shellMat.opacity = (selected ? 0.22 : 0.14) * pulse * amp * shellFade * (0.55 + bright * 0.45)
-      glowMat.opacity = (selected ? 0.1 : 0.055) * pulse * amp * haloFade * (0.5 + bright * 0.5)
+      const bright = brightnessWithEnergy(star.baseBrightness, star.energyGlow)
+      shellMat.opacity = (selected ? 0.22 : 0.14) * pulse * amp * shellFade * (0.55 + bright * 0.45) * energyPulse
+      glowMat.opacity = (selected ? 0.1 : 0.055) * pulse * amp * haloFade * (0.5 + bright * 0.5) * energyPulse
       // Slightly punchier emissive core when shrunk to a spark (still cinematic, not bloom-wash)
       const coreMat = star.core.material as unknown as SoftGlowMaterial
-      // Void/dormant stay dim; popular new (high zapEnergy → brightness) glow more among protostars
-      coreMat.emissiveIntensity = (0.55 + bright * 1.35) + close * 0.55 * bright
+      // Base keeps zap-interest (new stars) and dim dormant stars. Fan Energy lifts slowly on top.
+      coreMat.emissiveIntensity = ((0.55 + bright * 1.35) + close * 0.55 * bright) * energyPulse
       coreMat.opacity = vis * (0.45 + bright * 0.55)
       if (star.memorialHalo) {
         // Gentle two-frequency shimmer; brighter and readable from far zoom.
@@ -1542,7 +1559,8 @@ export class GalaxyScene {
         genreCenter: new THREE.Vector3(...GENRE_BY_ID[artist.genreId].center),
         genreRadius: GENRE_BY_ID[artist.genreId].radius * (artist.voidStar ? 1.35 : 1),
         baseBrightness: bright,
-        energyFlash: 0,
+        energyGlow: 0,
+        energyPulse: 0,
       }
       this.stars.push(handle)
       this.starById.set(artist.id, handle)

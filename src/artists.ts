@@ -1668,49 +1668,6 @@ export function computeZapEnergy(seed: {
   return Math.max(0.05, Math.min(0.95, e))
 }
 
-/**
- * Visual luminosity (0..1) from the existing zap-interest glow plus Energy
- * received from plays and zaps.
- *
- * `receivedSats` uses a log curve (log10, then a mild power) so the first
- * sats read on a dim star and enormous totals compress instead of blowing out.
- * Dormant / unknown stars with no Energy stay dim. New stars keep zap-interest
- * as their floor and brighten further as Energy arrives.
- */
-export function shineFromEnergy(
-  artist: Pick<Artist, 'brightness' | 'zapEnergy' | 'voidStar' | 'isNew' | 'stage'>,
-  receivedSats: number,
-): number {
-  const sats = Number.isFinite(receivedSats) && receivedSats > 0 ? receivedSats : 0
-  const raw = sats <= 0 ? 0 : Math.log10(1 + sats) / 7
-  const lift = Math.min(1, Math.pow(raw, 0.65))
-  const dormant = artist.voidStar && !artist.isNew
-
-  if (sats <= 0) {
-    // No plays or zaps yet: keep the catalog glow. Dormant / unknown stay dim.
-    if (artist.stage === 'dead') return Math.min(0.5, artist.brightness)
-    if (dormant) return Math.max(0.1, Math.min(0.55, artist.brightness))
-    return artist.brightness
-  }
-
-  if (artist.stage === 'dead') {
-    return Math.min(0.62, Math.min(artist.brightness, 0.5) + lift * 0.22)
-  }
-
-  if (artist.isNew) {
-    const floor = Math.max(0.28, Math.min(0.78, 0.32 + artist.zapEnergy * 0.48))
-    return Math.min(0.94, floor + (1 - floor) * lift * 0.9)
-  }
-
-  if (dormant) {
-    const floor = Math.max(0.14, Math.min(0.42, 0.16 + artist.zapEnergy * 0.28))
-    return Math.min(0.8, floor + lift * 0.62)
-  }
-
-  const floor = artist.brightness
-  return Math.min(1, floor + (1 - floor) * lift * 0.7)
-}
-
 function brightnessFor(voidStar: boolean, isNew: boolean, zapEnergy: number, size: number): number {
   if (!voidStar && !isNew) {
     // Established sample stars: mostly bright; size still shades slightly
