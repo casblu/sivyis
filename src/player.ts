@@ -1,4 +1,5 @@
 import type { Artist, Track } from './artists.ts'
+import { albumCoverImg, albumCoverUrl, placeholderCover } from './albumArt.ts'
 import { albumForTrack, energyPhrase, ZAP_PRESETS } from './energy.ts'
 import { wallet } from './wallet.ts'
 import artistPhotos from './artistPhotos.json'
@@ -271,7 +272,7 @@ export class MusicPlayer {
 
     this.titleEl.textContent = track.title
     this.artistEl.textContent = artist.name
-    this.renderArt(artist)
+    this.renderArt(artist, track)
     this.renderLyrics(track)
     this.paintEnergy()
 
@@ -322,16 +323,19 @@ export class MusicPlayer {
     }
   }
 
-  private renderArt(artist: Artist): void {
-    const cover = coverFor(artist)
+  private renderArt(artist: Artist, track: Track): void {
+    const cover = { url: albumCoverUrl(artist, track.album?.trim() || 'Singles') as string | null, initials: coverFor(artist).initials }
     const img = must(this.el, '#player-art-img') as HTMLImageElement
     const fallback = must(this.el, '#player-art-fallback')
     fallback.textContent = cover.initials || '✦'
     if (cover.url) {
       img.hidden = false
       img.src = cover.url
+      const fb = cover.url
       img.onerror = () => {
-        img.hidden = true
+        const alt = placeholderCover(artist.name, track.album?.trim() || 'Singles')
+        if (img.src !== alt && fb !== alt) img.src = alt
+        else img.hidden = true
       }
     } else {
       img.hidden = true
@@ -363,13 +367,13 @@ export class MusicPlayer {
     if (owned) {
       ind.textContent = 'Owned'
       ind.classList.add('is-owned')
-      albumBtn.textContent = 'Owned'
+      albumBtn.innerHTML = `${albumCoverImg(artist, album.name, 'album-cover album-cover-chip')}<span>Owned</span>`
       albumBtn.disabled = true
       return
     }
     ind.classList.remove('is-owned')
     albumBtn.disabled = false
-    albumBtn.textContent = 'Buy album'
+    albumBtn.innerHTML = `${albumCoverImg(artist, album.name, 'album-cover album-cover-chip')}<span>Buy album</span>`
     const setting = wallet.playSetting()
     if (!setting.enabled) ind.textContent = 'Energy off'
     else if (this.energyNote) ind.textContent = this.energyNote
@@ -489,7 +493,7 @@ export class MusicPlayer {
     pop.classList.remove('hidden')
     pop.innerHTML = `
       <p class="kicker">Buy album</p>
-      <p class="energy-album-name">${escapeHtml(album.name)}</p>
+      <div class="album-buy-head">${albumCoverImg(artist, album.name, 'album-cover album-cover-lg')}<p class="energy-album-name">${escapeHtml(album.name)}</p></div>
       <p class="send-hint">${album.trackCount} track${album.trackCount === 1 ? '' : 's'} · ${escapeHtml(energyPhrase(album.priceSats))}</p>
       <p class="demo-note">Simulated purchase. The album stays playable here. Owned tracks are not charged per play. Zap stays optional.</p>
       <div class="energy-actions">

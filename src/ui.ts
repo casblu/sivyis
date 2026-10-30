@@ -12,6 +12,7 @@ import type { NavMode } from './controls.ts'
 import { philosophyPageHtml } from './philosophy.ts'
 import { mountPhilosophyWeb, type PhilosophyWebHandle } from './philosophyWeb.ts'
 import { mountMusicHistory, type MusicHistoryHandle } from './musicHistory.ts'
+import { albumCoverImg } from './albumArt.ts'
 import { albumsFor, energyPhrase, ZAP_PRESETS } from './energy.ts'
 import { timeAgo, wallet, type WalletTx } from './wallet.ts'
 import { memorialYears } from './memorials.ts'
@@ -506,7 +507,8 @@ export class UI {
     return albumsFor(artist.baseId, artist.tracks).map((album) => {
       const owned = wallet.ownsAlbum(artist.baseId, album.key)
       return `<li>
-        <span><b>${escapeHtml(album.name)}</b><i>${album.trackCount} track${album.trackCount === 1 ? '' : 's'}</i></span>
+        ${albumCoverImg(artist, album.name, 'album-cover')}
+        <span class="album-meta"><b>${escapeHtml(album.name)}</b><i>${album.trackCount} track${album.trackCount === 1 ? '' : 's'}</i></span>
         ${owned
           ? '<em class="owned-pill">Owned</em>'
           : `<button type="button" class="btc-send-btn" data-album="${escapeHtml(album.key)}">Buy · ${escapeHtml(energyPhrase(album.priceSats))}</button>`}
@@ -596,7 +598,7 @@ export class UI {
         <p class="kicker">Confirm album purchase</p>
         <button type="button" class="send-close" id="album-close" aria-label="Close purchase">×</button>
       </div>
-      <p class="energy-album-name">${escapeHtml(album.name)}</p>
+      <div class="album-buy-head">${albumCoverImg(artist, album.name, 'album-cover album-cover-lg')}<p class="energy-album-name">${escapeHtml(album.name)}</p></div>
       <p class="send-hint">${album.trackCount} tracks · ${escapeHtml(energyPhrase(album.priceSats))}</p>
       <p class="demo-note">Simulated. Playback stays in Cosmoly. After you own it, those tracks are not charged per play. Zapping stays optional. The price counts as Energy on this star.</p>
       <div class="energy-actions">
