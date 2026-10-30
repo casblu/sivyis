@@ -12,7 +12,7 @@ import type { NavMode } from './controls.ts'
 import { philosophyPageHtml } from './philosophy.ts'
 import { mountPhilosophyWeb, type PhilosophyWebHandle } from './philosophyWeb.ts'
 import { mountMusicHistory, type MusicHistoryHandle } from './musicHistory.ts'
-import { albumCoverImg } from './albumArt.ts'
+import { albumCoverImg, merchImg, merchKind, MERCH_LABEL } from './albumArt.ts'
 import { albumsFor, energyPhrase, ZAP_PRESETS } from './energy.ts'
 import { timeAgo, wallet, type WalletTx } from './wallet.ts'
 import { memorialYears } from './memorials.ts'
@@ -397,7 +397,7 @@ export class UI {
 
     const storeLinks = artist.open
       ? artist.open.links
-          .map((l) => `<li><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.label)}</a></li>`)
+          .map((l) => merchTile(artist.name, l.label, l.url, true, (l as { image?: string }).image))
           .join('')
       : mockStoreLinks(artist)
     const related = relatedArtists(artist)
@@ -421,11 +421,11 @@ export class UI {
       <div class="send-btc-form hidden" id="zap-panel"></div>
 
       <h3>Albums</h3>
-      <ul class="album-list" id="album-list">${this.albumRows(artist)}</ul>
+      <ul class="tile-grid album-list" id="album-list">${this.albumRows(artist)}</ul>
       <div class="send-btc-form hidden" id="album-confirm"></div>
 
       <h3>Store &amp; merch</h3>
-      <ul class="link-list">${storeLinks}</ul>
+      <ul class="tile-grid merch-grid">${storeLinks}</ul>
 
       <h3>Related</h3>
       <ul class="link-list related-list">${related}</ul>
@@ -506,9 +506,9 @@ export class UI {
   private albumRows(artist: Artist): string {
     return albumsFor(artist.baseId, artist.tracks).map((album) => {
       const owned = wallet.ownsAlbum(artist.baseId, album.key)
-      return `<li>
-        ${albumCoverImg(artist, album.name, 'album-cover')}
-        <span class="album-meta"><b>${escapeHtml(album.name)}</b><i>${album.trackCount} track${album.trackCount === 1 ? '' : 's'}</i></span>
+      return `<li class="tile">
+        ${albumCoverImg(artist, album.name, 'tile-img')}
+        <span class="tile-meta"><b>${escapeHtml(album.name)}</b><i>${album.trackCount} track${album.trackCount === 1 ? '' : 's'}</i></span>
         ${owned
           ? '<em class="owned-pill">Owned</em>'
           : `<button type="button" class="btc-send-btn" data-album="${escapeHtml(album.key)}">Buy · ${escapeHtml(energyPhrase(album.priceSats))}</button>`}
@@ -845,12 +845,13 @@ function mockStoreLinks(artist: Artist): string {
     { label: 'Tour & tickets', href: `#tour/${slug}` },
     { label: 'Press kit', href: `#press/${slug}` },
   ]
-  return items
-    .map(
-      (i) =>
-        `<li><a href="${i.href}" onclick="return false">${escapeHtml(i.label)} <span>demo link</span></a></li>`,
-    )
-    .join('')
+  return items.map((i) => merchTile(artist.name, i.label, i.href, false)).join('')
+}
+
+function merchTile(artistName: string, label: string, href: string, external: boolean, image?: string): string {
+  const sub = MERCH_LABEL[merchKind(label)] + (external ? '' : ' · demo')
+  const attrs = external ? 'target="_blank" rel="noopener"' : 'onclick="return false"'
+  return `<li class="tile"><a href="${escapeHtml(href)}" ${attrs}>${merchImg(artistName, label, image)}<span class="tile-meta"><b>${escapeHtml(label)}</b><i>${escapeHtml(sub)}</i></span></a></li>`
 }
 
 function alsoInLine(artist: Artist): string {

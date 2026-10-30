@@ -2164,3 +2164,26 @@ html.player-open #panel {
 .album-cover-lg { width: 72px; height: 72px; border-radius: 10px; }
 .album-cover-chip { width: 20px; height: 20px; border-radius: 4px; box-shadow: none; vertical-align: middle; margin-right: 6px; }
 #player-album { display: inline-flex; align-items: center; }
+
+/* Picture tiles: albums + merch */
+.tile-grid {
+  list-style: none; margin: 0 0 14px; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px;
+}
+.tile-grid li.tile, .album-list li.tile {
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  gap: 6px; padding: 0; border: 0; min-width: 0;
+}
+.tile > a { display: flex; flex-direction: column; gap: 6px; color: inherit; text-decoration: none; }
+.tile-img {
+  width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; display: block;
+  border-radius: 10px; background: rgba(255,255,255,0.06);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  transition: transform .25s ease;
+}
+@media (hover: hover) { .tile:hover .tile-img { transform: translateY(-2px); } }
+.tile-meta { display: block; min-width: 0; }
+.tile-meta b { display: block; font-family: 'Exo 2', sans-serif; font-size: .85rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.tile-meta i { display: block; color: var(--muted); font-style: normal; font-size: .72rem; margin-top: 2px; }
+.album-list .tile .btc-send-btn, .album-list .tile .owned-pill { align-self: flex-start; font-size: .75rem; padding: 6px 10px; }
+@media (max-width: 480px) { .tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
