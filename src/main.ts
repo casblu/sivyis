@@ -4,6 +4,7 @@ import './style.css'
 import * as THREE from 'three'
 import {
   GENRES,
+  CLASSICAL_GENRE,
   GENRE_LABEL_RADIUS,
   HEARING_RADIUS,
   getArtistProfile,
@@ -347,7 +348,19 @@ function frame(): void {
       const hideForArtist = closest !== null && closest.distance < 10
       ui.setGenreLabel(nearGenre.genre, x, y, onscreen && !hideForArtist)
     } else {
-      ui.setGenreLabel(null, 0, 0, false)
+      // Classical outer shell: label the period (and subgenre) region when near the smoke band.
+      const region = galaxy.classicalShell.nearestRegion(origin)
+      if (region) {
+        galaxy.worldToScreen(region.center, projected)
+        const onscreen = projected.z > -1 && projected.z < 1
+        const x = (projected.x * 0.5 + 0.5) * window.innerWidth
+        const y = (-projected.y * 0.5 + 0.5) * window.innerHeight - 48
+        const name = `Classical · ${region.period.name} (${region.period.years})${region.sub ? ' · ' + region.sub : ''}`
+        const hideForArtist = closest !== null && closest.distance < 10
+        ui.setGenreLabel({ ...CLASSICAL_GENRE, name, color: region.period.color }, x, y, onscreen && !hideForArtist)
+      } else {
+        ui.setGenreLabel(null, 0, 0, false)
+      }
     }
   }
 

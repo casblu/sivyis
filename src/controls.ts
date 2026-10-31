@@ -1,3 +1,4 @@
+import { CLASSICAL_SHELL_RADIUS, WORLD_MAX_RADIUS } from './classicalData.ts'
 import * as THREE from 'three'
 import { GENRE_BALL_RADIUS, OVERVIEW_ORBIT_RADIUS } from './genreBall.ts'
 
@@ -13,7 +14,8 @@ const PITCH_MAX = Math.PI / 2 - 0.08
 const LOOK_INERTIA = 0.92
 const LOOK_INERTIA_STOP = 0.0004
 const ZOOM_MIN_ORIGIN = 1.2
-const ZOOM_MAX_ORIGIN = 320
+/** Free flight reaches past the Classical outer shell into open space. */
+const ZOOM_MAX_ORIGIN = WORLD_MAX_RADIUS
 const DOLLY_NEAR_STAR = 7
 const TAP_MOVE_PX = 12
 const TAP_MAX_MS = 650
@@ -355,7 +357,13 @@ export class FlyControls {
     this.camera.getWorldDirection(this.forward)
     this.right.crossVectors(this.forward, this.up).normalize()
 
-    const max = (this.boost ? BOOST_SPEED : BASE_SPEED) * this.speedScale
+    // Far-field cruise: speed scales up beyond the genre ball so the huge outer shell is reachable,
+    // easing back down inside the Classical smoke band so composer stars stay explorable.
+    const len = this.camera.position.length()
+    const far = 1 + Math.min(12, Math.max(0, len - 300) / 100)
+    const band = Math.min(1, Math.abs(len - CLASSICAL_SHELL_RADIUS) / 300)
+    const cruise = 1 + (far - 1) * (0.2 + 0.8 * band * band)
+    const max = (this.boost ? BOOST_SPEED : BASE_SPEED) * this.speedScale * cruise
     const wish = this.wishTmp.set(0, 0, 0)
 
     if (this.keys.has('w') || this.keys.has('arrowup') || this.thrusting) {

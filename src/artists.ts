@@ -1,4 +1,5 @@
 import openCatalog from './openCatalog.json'
+import { CLASSICAL_SHELL_RADIUS, CLASSICAL_SHELL_HALF, CLASSICAL_SUBS, COMPOSERS, classicalHash } from './classicalData.ts'
 import { MEMORIALS, SUPERNOVA_REMNANTS, type Memorial } from './memorials.ts'
 import {
   GENRE_BALL_RADIUS,
@@ -81,6 +82,7 @@ export type GenreId =
   | 'country'
   | 'indie'
   | 'metal'
+  | 'classical'
 
 export type Genre = {
   id: GenreId
@@ -276,11 +278,26 @@ export const GENRES: Genre[] = GENRE_DEFS.map((def, i) => ({
   radius: GENRE_CLUSTER_RADIUS,
 }))
 
+/**
+ * Classical lives on the gigantic outer shell (see classicalData.ts), NOT in GENRES,
+ * so the existing ten-genre layout/loops are untouched.
+ */
+export const CLASSICAL_GENRE: Genre = {
+  id: 'classical',
+  name: 'Classical',
+  color: 0xe8d6a8,
+  center: [0, 0, 0],
+  radius: CLASSICAL_SHELL_RADIUS,
+  nebulaA: 'rgba(230,210,160,0.2)',
+  nebulaB: 'rgba(120,100,180,0.1)',
+  audio: { root: 57, intervals: MAJOR, pattern: ARP_E, tempo: 72, wave: 'sine', cutoff: 1400, padMix: 0.4 },
+}
+
 export const GENRE_BY_ID: Record<GenreId, Genre> = Object.fromEntries(
-  GENRES.map((g) => [g.id, g]),
+  [...GENRES, CLASSICAL_GENRE].map((g) => [g.id, g]),
 ) as Record<GenreId, Genre>
 
-const SUBGENRE_NAMES: Record<GenreId, string[]> = {
+const SUBGENRE_NAMES: Record<Exclude<GenreId, 'classical'>, string[]> = {
   hiphop: ['Boom Bap', 'Trap', 'Conscious', 'Drill', 'Alternative Rap'],
   pop: ['Dance Pop', 'Synth Pop', 'Teen Pop', 'Art Pop', 'Electropop'],
   rock: ['Classic Rock', 'Alternative', 'Punk', 'Indie Rock', 'Progressive'],
@@ -308,7 +325,7 @@ function buildSubgenres(): Subgenre[] {
   const centers = GENRES.map((g) => g.center)
   const out: Subgenre[] = []
   GENRES.forEach((parent, gi) => {
-    const names = SUBGENRE_NAMES[parent.id]
+    const names = SUBGENRE_NAMES[parent.id as Exclude<GenreId, 'classical'>] ?? []
     const orbit = parent.radius * SUBGENRE_ORBIT_MUL
     const offsets = pentagonOffsets(orbit, gi)
     const near = nearestIndices(centers, gi, 2)
@@ -337,8 +354,25 @@ function buildSubgenres(): Subgenre[] {
 
 export const SUBGENRES: Subgenre[] = buildSubgenres()
 
+function shellPoint(dir: [number, number, number], r: number): [number, number, number] {
+  return [dir[0] * r, dir[1] * r, dir[2] * r]
+}
+
+/** Classical subgenres (outer shell) — kept out of SUBGENRES so inner loops are unchanged. */
+export const CLASSICAL_SUBGENRES: Subgenre[] = CLASSICAL_SUBS.map((c) => ({
+  id: c.id,
+  name: c.name,
+  parentId: 'classical' as const,
+  center: shellPoint(c.dir, CLASSICAL_SHELL_RADIUS),
+  radius: 60,
+  color: c.color,
+  nebulaA: rgbaFromHex(c.color, 0.2),
+  nebulaB: rgbaFromHex(c.color, 0.08),
+  audio: { ...CLASSICAL_GENRE.audio },
+}))
+
 export const SUBGENRE_BY_ID: Record<string, Subgenre> = Object.fromEntries(
-  SUBGENRES.map((s) => [s.id, s]),
+  [...SUBGENRES, ...CLASSICAL_SUBGENRES].map((s) => [s.id, s]),
 )
 
 type ArtistSeed = {
@@ -1953,7 +1987,53 @@ function openSeeds(): ArtistSeed[] {
   return out
 }
 
-export const ARTISTS: Artist[] = expandSeeds([...(seeds as ArtistSeed[]), ...openSeeds()])
+/** Composer stars scattered inside their period/subgenre regions of the outer shell. */
+function classicalArtists(): Artist[] {
+  return COMPOSERS.map((c) => {
+    const sub = SUBGENRE_BY_ID[c.sub]
+    if (!sub) throw new Error(`Unknown classical subgenre ${c.sub}`)
+    const id = slug(c.name)
+    const h = (k: string) => classicalHash(id + k) - 0.5
+    const r = CLASSICAL_SHELL_RADIUS + h('r') * CLASSICAL_SHELL_HALF * 0.9
+    const cx = sub.center[0] / CLASSICAL_SHELL_RADIUS + h('x') * 0.07
+    const cy = sub.center[1] / CLASSICAL_SHELL_RADIUS + h('y') * 0.07
+    const cz = sub.center[2] / CLASSICAL_SHELL_RADIUS + h('z') * 0.07
+    const l = Math.hypot(cx, cy, cz) || 1
+    const size = c.size ?? 1.05
+    const tracks: Track[] = c.works.map((title) => ({ title, duration: '—' }))
+    const zapEnergy = computeZapEnergy({ id, tracks, size })
+    return {
+      id,
+      baseId: id,
+      name: c.name,
+      genre: CLASSICAL_GENRE.name,
+      genreId: 'classical' as const,
+      subgenreId: sub.id,
+      subgenre: sub.name,
+      alsoIn: [],
+      bio: c.bio,
+      tracks,
+      color: sub.color,
+      size: size * 1.6,
+      offset: [0, 0, 0] as [number, number, number],
+      position: [(cx / l) * r, (cy / l) * r, (cz / l) * r] as [number, number, number],
+      audio: { ...sub.audio, root: CLASSICAL_GENRE.audio.root + Math.round(h('n') * 6) },
+      showBalance: false,
+      deceased: c.died != null,
+      deathYear: c.died,
+      isNew: false,
+      stage: 'star' as const,
+      voidStar: false,
+      zapEnergy,
+      brightness: brightnessFor(false, false, zapEnergy, size),
+    }
+  })
+}
+
+export const ARTISTS: Artist[] = [
+  ...expandSeeds([...(seeds as ArtistSeed[]), ...openSeeds()]),
+  ...classicalArtists(),
+]
 
 /** Unique profiles (primary instances only). */
 export const ARTIST_PROFILES: Artist[] = ARTISTS.filter((a) => a.id === a.baseId)

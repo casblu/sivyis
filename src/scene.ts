@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { ClassicalShell } from './classicalShell.ts'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
@@ -526,7 +527,7 @@ export class GalaxyScene {
     this.scene.background = new THREE.Color(0x010008)
     this.scene.fog = new THREE.FogExp2(0x03010a, 0.0032)
 
-    this.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 900)
+    this.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 4200)
     // Start INSIDE the hollow genre ball, looking outward at surrounding clusters
     this.camera.position.set(0, 4 + OVERVIEW_ORBIT_RADIUS * 0.35, OVERVIEW_ORBIT_RADIUS)
     this.camera.lookAt(0, 4, 0)
@@ -543,6 +544,10 @@ export class GalaxyScene {
     this.spawnGenreNebulae()
     this.spawnSubgenreNebulae()
     this.spawnArtists()
+    this.classicalShell = new ClassicalShell(this.scene)
+    this.classicalShell.setQuality(this.quality)
+    // Sparse deep field beyond the Classical shell (fogged: only seen out there)
+    this.scene.add(this.makeStarfield(2600, 2600, 2.2))
     this.spawnFilaments()
     this.spawnStarMist()
 
@@ -586,6 +591,9 @@ export class GalaxyScene {
     this.composer.setPixelRatio(pr)
     this.composer.setSize(w, h)
   }
+
+  /** Gigantic Classical outer shell (smoke/dust, chunked + LOD). */
+  classicalShell!: ClassicalShell
 
   private lite = false
   /** Cheap render (1x pixel ratio) while a zap overlay is on screen. */
@@ -852,6 +860,16 @@ export class GalaxyScene {
     // Per-genre visibility: stars only appear near/inside their nebula.
     this.genreVis.clear()
     for (const star of this.stars) {
+      if (star.artist.genreId === 'classical') {
+        // Outer-shell composer stars: per-star proximity, cheap cull when far away.
+        const d = cam.distanceTo(star.group.position)
+        let cv = 0
+        if (d < 240) { const x = Math.max(0, Math.min(1, (240 - d) / 150)); cv = x * x * (3 - 2 * x) }
+        if (this.selectedId && (star.artist.baseId === this.selectedId || star.artist.id === this.selectedId)) cv = 1
+        star.vis = cv
+        star.group.visible = cv > 0.005
+        continue
+      }
       let v = this.genreVis.get(star.artist.genreId)
       if (v === undefined) {
         const neb = this.nebulaByGenre.get(star.artist.genreId)
@@ -939,6 +957,7 @@ export class GalaxyScene {
       }
     }
 
+    this.classicalShell.update(t, camPos)
     this.updateStarMist(t, this.lastDt)
     this.updateZaps(Math.min(this.lastDt, 0.05))
     const lf = this.lightning
@@ -981,6 +1000,7 @@ export class GalaxyScene {
 
   private applyQuality(q: QualityTier): void {
     this.quality = q
+    this.classicalShell?.setQuality(q)
     if (this.bloomPass) {
       this.bloomPass.strength = q === 2 ? this.baseBloomStrength : q === 1 ? 0.2 : 0.12
     }
@@ -1374,7 +1394,7 @@ export class GalaxyScene {
       this.nebulaByGenre.set(genre.id, handle)
 
       // Swap in real NASA photography (public domain) when loaded — cut by the same irregular masks.
-      const photo = GENRE_NEBULA_PHOTO[genre.id]
+      const photo = GENRE_NEBULA_PHOTO[genre.id as Exclude<GenreId, 'classical'>]
       void loadNebulaImage(photo.src)
         .then((img) => {
           puffMeshes.forEach((mesh, li) => {
@@ -1846,6 +1866,7 @@ export class GalaxyScene {
 
   private onResize = (): void => {
     this.syncResolution()
+    this.classicalShell?.resize()
   }
 }
 

@@ -11,7 +11,7 @@ export type NebulaPhoto = {
   nasaId: string
 }
 
-export const GENRE_NEBULA_PHOTO: Record<GenreId, NebulaPhoto> = {
+export const GENRE_NEBULA_PHOTO: Record<Exclude<GenreId, 'classical'>, NebulaPhoto> = {
   hiphop: {
     src: './nebulae/bubble.jpg',
     name: 'Hubble Bubbles and Baby Stars',
