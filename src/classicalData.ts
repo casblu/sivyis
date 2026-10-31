@@ -117,4 +117,7 @@ export const COMPOSERS: ComposerSeed[] = [
   { name: 'Max Richter', sub: s('Neo-Classical'), bio: 'German-British composer bridging minimalism and electronics.', works: ['On the Nature of Daylight', 'Recomposed: Spring 1', 'Sleep'] },
 ]
 
-export const PUBLIC_DOMAIN_IDS: ReadonlySet<string> = new Set(COMPOSERS.map((c) => composerId(c.name)))
+/** Only deceased composers (have a death year) are public domain; living composers are paid like any artist. */
+export const PUBLIC_DOMAIN_IDS: ReadonlySet<string> = new Set(
+  COMPOSERS.filter((c) => c.died != null).map((c) => composerId(c.name)),
+)

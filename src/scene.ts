@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { ClassicalShell } from './classicalShell.ts'
+import { isPublicDomain } from './classicalData.ts'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
@@ -629,7 +630,7 @@ export class GalaxyScene {
     for (const star of this.stars) {
       const sats = satsByBase[star.artist.baseId] ?? 0
       // Public-domain composers never accrue Energy: fixed brightness.
-      star.energyGlow = star.artist.genreId === 'classical' ? 0 : energyGlow(sats)
+      star.energyGlow = isPublicDomain(star.artist.baseId) ? 0 : energyGlow(sats)
     }
   }
 
