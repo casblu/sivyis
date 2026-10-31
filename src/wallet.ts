@@ -3,6 +3,7 @@
  * Plays, zaps, and album purchases are simulated. No real chain and no real funds.
  */
 
+import { isPublicDomain } from './classicalData.ts'
 import {
   albumForTrack,
   albumsFor,
@@ -105,7 +106,7 @@ function ensureArtist(state: WalletState, artistId: string): void {
 export type ChargePlayResult = {
   ok: true
   charged: boolean
-  reason: 'sent' | 'owned' | 'off' | 'no-balance'
+  reason: 'sent' | 'owned' | 'off' | 'no-balance' | 'public-domain'
   sats: number
 }
 
@@ -204,6 +205,7 @@ export class DemoWallet {
    * Disabled in settings, or not enough Energy, does not debit.
    */
   chargePlay(artistId: string, artistName: string, albumKey: string): ChargePlayResult {
+    if (isPublicDomain(artistId)) return { ok: true, charged: false, reason: 'public-domain', sats: 0 }
     if (this.ownsAlbum(artistId, albumKey)) {
       return { ok: true, charged: false, reason: 'owned', sats: 0 }
     }
@@ -221,6 +223,7 @@ export class DemoWallet {
 
   /** Explicit zap. Caller must confirm in the UI before calling. */
   zap(artistId: string, artistName: string, sats: number): { ok: true; sats: number } | { ok: false; error: string } {
+    if (isPublicDomain(artistId)) return { ok: false, error: 'Public domain · this composer cannot receive Energy' }
     const n = Math.round(sats)
     if (!Number.isFinite(n) || n < 1) return { ok: false, error: 'Enter at least 1 sat of Energy' }
     return this.debit(artistId, artistName, n, 'zap', `Zap → ${artistName}`)
@@ -237,6 +240,7 @@ export class DemoWallet {
     tracks: { album?: string }[],
   ): { ok: true; sats: number; name: string } | { ok: false; error: string } {
     const id = baseId(artistId)
+    if (isPublicDomain(id)) return { ok: false, error: 'Public domain · plays free, nothing to buy' }
     if (this.ownsAlbum(id, albumKey)) return { ok: false, error: 'You already own this album' }
     const offer = albumsFor(id, tracks).find((a) => a.key === albumKey)
     if (!offer) return { ok: false, error: 'Album not found' }
@@ -272,6 +276,7 @@ export class DemoWallet {
     note: string,
     silent = false,
   ): { ok: true; sats: number } | { ok: false; error: string } {
+    if (isPublicDomain(artistId)) return { ok: false, error: 'Public domain · this composer cannot receive Energy' }
     const n = Math.round(sats)
     if (!Number.isFinite(n) || n <= 0) return { ok: false, error: 'Enter a positive amount of Energy' }
     const bal = this.userSats

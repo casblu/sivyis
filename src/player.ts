@@ -2,6 +2,7 @@ import type { Artist, Track } from './artists.ts'
 import { albumCoverImg, albumCoverUrl, placeholderCover } from './albumArt.ts'
 import { albumForTrack, energyPhrase, ZAP_PRESETS } from './energy.ts'
 import { wallet } from './wallet.ts'
+import { isPublicDomain } from './classicalData.ts'
 import artistPhotos from './artistPhotos.json'
 
 type Photo = { file: string; artist: string; license: string; source: string }
@@ -362,6 +363,15 @@ export class MusicPlayer {
       ind.textContent = playRateLabel()
       return
     }
+    const zapBtn = must(this.el, '#player-zap') as HTMLButtonElement
+    const pd = isPublicDomain(artist.baseId)
+    zapBtn.hidden = pd
+    albumBtn.hidden = pd
+    if (pd) {
+      ind.textContent = 'Public domain · plays free'
+      ind.classList.add('is-owned')
+      return
+    }
     const album = albumForTrack(artist.baseId, track, artist.tracks)
     const owned = wallet.ownsAlbum(artist.baseId, album.key)
     if (owned) {
@@ -424,6 +434,7 @@ export class MusicPlayer {
   }
 
   private openZap(): void {
+    if (this.artist && isPublicDomain(this.artist.baseId)) return
     const artist = this.artist
     if (!artist) return
     const pop = this.pop()
@@ -481,6 +492,7 @@ export class MusicPlayer {
   }
 
   private openAlbumBuy(): void {
+    if (this.artist && isPublicDomain(this.artist.baseId)) return
     const artist = this.artist
     const track = this.track()
     if (!artist || !track) return

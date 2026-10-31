@@ -72,6 +72,17 @@ export type ComposerSeed = { name: string; sub: string; bio: string; works: stri
 
 const s = (n: string) => 'classical-' + n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '')
 
+/** Star ids of public-domain composers (slug of name, same as artists.ts slug()). */
+export function composerId(name: string): string {
+  return name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+/** Public-domain composers cannot receive money: no per-play sats, zaps, album sales or Energy. */
+export function isPublicDomain(artistId: string): boolean {
+  const base = artistId.includes('__') ? artistId.slice(0, artistId.indexOf('__')) : artistId
+  return PUBLIC_DOMAIN_IDS.has(base)
+}
+
 export const COMPOSERS: ComposerSeed[] = [
   { name: 'Hildegard von Bingen', sub: s('Gregorian Chant'), died: 1179, bio: 'German abbess, mystic and composer whose soaring monophonic chants are among the earliest music by a named composer.', works: ['O vis aeternitatis', 'Ordo Virtutum', 'O frondens virga'] },
   { name: 'Guillaume de Machaut', sub: s('Troubadour & Ars Nova'), died: 1377, bio: 'Leading poet-composer of the French Ars Nova; his Messe de Nostre Dame is the first complete polyphonic Mass by one composer.', works: ['Messe de Nostre Dame', 'Ma fin est mon commencement', 'Douce dame jolie'] },
@@ -105,3 +116,5 @@ export const COMPOSERS: ComposerSeed[] = [
   { name: 'Ludovico Einaudi', sub: s('Neo-Classical'), bio: 'Italian pianist-composer of intimate neo-classical piano.', works: ['Nuvole Bianche', 'Experience', 'Una Mattina'] },
   { name: 'Max Richter', sub: s('Neo-Classical'), bio: 'German-British composer bridging minimalism and electronics.', works: ['On the Nature of Daylight', 'Recomposed: Spring 1', 'Sleep'] },
 ]
+
+export const PUBLIC_DOMAIN_IDS: ReadonlySet<string> = new Set(COMPOSERS.map((c) => composerId(c.name)))

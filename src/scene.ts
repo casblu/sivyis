@@ -628,7 +628,8 @@ export class GalaxyScene {
   syncEnergy(satsByBase: Record<string, number>): void {
     for (const star of this.stars) {
       const sats = satsByBase[star.artist.baseId] ?? 0
-      star.energyGlow = energyGlow(sats)
+      // Public-domain composers never accrue Energy: fixed brightness.
+      star.energyGlow = star.artist.genreId === 'classical' ? 0 : energyGlow(sats)
     }
   }
 

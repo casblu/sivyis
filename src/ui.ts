@@ -1,3 +1,4 @@
+import { isPublicDomain } from './classicalData.ts'
 import {
   ARTIST_PROFILES,
   ARTISTS,
@@ -411,13 +412,13 @@ export class UI {
       <p class="bio">${escapeHtml(artist.bio)}</p>
       ${artist.open ? openPayHtml(artist) : '<p class="demo-note">Audio is a royalty-safe procedural demo generated in your browser — not a copyrighted recording. Song titles are listed for reference only.</p>'}
 
-      <div class="artist-wallet-card" id="artist-wallet-card">
+      ${isPublicDomain(artist.baseId) ? `<p class="memorial-line public-domain-note">Public domain · plays free</p>` : `<div class="artist-wallet-card" id="artist-wallet-card">
         <div>
           <span class="kicker">Energy received</span>
           <strong id="artist-energy-received">${escapeHtml(energyPhrase(wallet.receivedSats(artist.baseId)))}</strong>
         </div>
         <button type="button" class="btc-send-btn" id="open-zap">Zap</button>
-      </div>
+      </div>`}
       <div class="send-btc-form hidden" id="zap-panel"></div>
 
       <h3>Albums</h3>
@@ -465,7 +466,7 @@ export class UI {
     })
 
     const zapPanel = must(this.panel, '#zap-panel')
-    must(this.panel, '#open-zap').addEventListener('click', () => {
+    this.panel.querySelector('#open-zap')?.addEventListener('click', () => {
       this.renderZapPanel(artist, zapPanel)
       zapPanel.classList.remove('hidden')
       zapPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
@@ -509,7 +510,9 @@ export class UI {
       return `<li class="tile">
         ${albumCoverImg(artist, album.name, 'tile-img')}
         <span class="tile-meta"><b>${escapeHtml(album.name)}</b><i>${album.trackCount} track${album.trackCount === 1 ? '' : 's'}</i></span>
-        ${owned
+        ${isPublicDomain(artist.baseId)
+          ? '<em class="owned-pill">Free</em>'
+          : owned
           ? '<em class="owned-pill">Owned</em>'
           : `<button type="button" class="btc-send-btn" data-album="${escapeHtml(album.key)}">Buy · ${escapeHtml(energyPhrase(album.priceSats))}</button>`}
       </li>`
