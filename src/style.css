@@ -2187,3 +2187,20 @@ html.player-open #panel {
 .tile-meta i { display: block; color: var(--muted); font-style: normal; font-size: .72rem; margin-top: 2px; }
 .album-list .tile .btc-send-btn, .album-list .tile .owned-pill { align-self: flex-start; font-size: .75rem; padding: 6px 10px; }
 @media (max-width: 480px) { .tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+
+#classical-btn {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 10px 16px;
+  background: var(--glass);
+  color: #e8d6a8;
+  border: 1px solid color-mix(in srgb, #e8d6a8 45%, var(--line));
+  border-radius: 999px;
+  font: 500 0.78rem 'Exo 2', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#classical-btn:hover { filter: brightness(1.15); }
+.search-classical b { color: #e8d6a8; }

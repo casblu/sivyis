@@ -272,7 +272,8 @@ export class FlyControls {
     } else if (dist > ZOOM_MAX_ORIGIN) toPos.setLength(ZOOM_MAX_ORIGIN)
 
     const distance = from.distanceTo(toPos)
-    const duration = THREE.MathUtils.clamp(1.5 + 2.0 * (distance / 200), 1.5, 3.5)
+    // Long hauls (e.g. out to the Classical shell) get more time so the swoop stays smooth.
+    const duration = distance > 500 ? THREE.MathUtils.clamp(3.5 + distance / 600, 3.5, 7) : THREE.MathUtils.clamp(1.5 + 2.0 * (distance / 200), 1.5, 3.5)
 
     // Outward control points so the arc feels like a galactic swoop
     const mid = new THREE.Vector3().addVectors(from, toPos).multiplyScalar(0.5)

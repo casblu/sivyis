@@ -18,7 +18,7 @@ import { fibonacciSphere } from './genreBall.ts'
  * on phones. The same cell index can later page in per-cell star/user data.
  */
 const CHUNKS = 64
-const PER_CHUNK = 520
+const PER_CHUNK = 900
 const CHUNK_VIS_DIST = 760
 const FADE_FAR = 520 // distance from shell surface where smoke starts appearing
 const FADE_NEAR = 60
@@ -43,7 +43,7 @@ function smokeTexture(): THREE.CanvasTexture {
     const y = size * (0.3 + hash(i, 2) * 0.4)
     const r = size * (0.18 + hash(i, 3) * 0.22)
     const gr = g.createRadialGradient(x, y, 0, x, y, r)
-    gr.addColorStop(0, 'rgba(255,255,255,0.35)')
+    gr.addColorStop(0, 'rgba(255,255,255,0.6)')
     gr.addColorStop(1, 'rgba(255,255,255,0)')
     g.fillStyle = gr
     g.fillRect(0, 0, size, size)
@@ -118,7 +118,7 @@ export class ClassicalShell {
         colr[i * 3 + 1] = col.g
         colr[i * 3 + 2] = col.b
         // ~18% big smoke puffs, rest fine dust (shuffled order so drawRange trims evenly)
-        size[i] = hash(k, 8) < 0.18 ? 60 + hash(k, 9) * 70 : 2.5 + hash(k, 9) * 5
+        size[i] = hash(k, 8) < 0.3 ? 120 + hash(k, 9) * 160 : 4 + hash(k, 9) * 7
         seed[i] = hash(k, 10) * 100
       }
       const geo = new THREE.BufferGeometry()
@@ -139,9 +139,9 @@ export class ClassicalShell {
             p += vec3(sin(t * 1.3), cos(t * 0.9), sin(t * 1.1 + 2.0)) * (aSize > 30.0 ? 18.0 : 7.0);
             vec4 mv = modelViewMatrix * vec4(p, 1.0);
             float dist = -mv.z;
-            gl_PointSize = clamp(aSize * uScale / max(dist, 1.0), 0.0, 96.0);
+            gl_PointSize = clamp(aSize * uScale / max(dist, 1.0), 0.0, aSize > 30.0 ? 220.0 : 24.0);
             // Fade puffs that are right on the camera (fly-through) to avoid fill-rate spikes
-            vFade = smoothstep(4.0, 40.0, dist) * (aSize > 30.0 ? 0.55 : 1.0);
+            vFade = smoothstep(4.0, 40.0, dist) * (aSize > 30.0 ? 0.7 : 1.0);
             vColor = color;
             vRot = aSeed + uTime * 0.02;
             gl_Position = projectionMatrix * mv;
@@ -156,7 +156,7 @@ export class ClassicalShell {
             vec4 tx = texture2D(uMap, c + 0.5);
             float a = tx.a * uOpacity * vFade;
             if (a < 0.003) discard;
-            gl_FragColor = vec4(vColor * 1.15, a);
+            gl_FragColor = vec4(vColor * 1.6, a);
           }`,
         transparent: true,
         depthWrite: false,
@@ -170,10 +170,61 @@ export class ClassicalShell {
       this.chunks.push({ points, center: cd.clone().multiplyScalar(CLASSICAL_SHELL_RADIUS), mat })
     })
     scene.add(this.group)
+    this.glow = this.makeGlow()
+    scene.add(this.glow)
+  }
+
+  /**
+   * Distant haze: one back-faced sphere (single draw call) tinted by the period gradient,
+   * very faint so the shell reads as a colored horizon from inside the galaxy / overview.
+   * It fades out as you enter the band, where the particle smoke takes over.
+   */
+  private glow: THREE.Mesh
+  private glowMat!: THREE.ShaderMaterial
+  private makeGlow(): THREE.Mesh {
+    const dirs = CLASSICAL_PERIODS.map((p) => new THREE.Vector3(...p.dir))
+    const cols = CLASSICAL_PERIODS.map((p) => new THREE.Color(p.color))
+    this.glowMat = new THREE.ShaderMaterial({
+      uniforms: { uDirs: { value: dirs }, uCols: { value: cols }, uOpacity: { value: 0.1 }, uTime: this.uTime },
+      vertexShader: /* glsl */ `
+        varying vec3 vDir; varying vec3 vWorld;
+        void main() {
+          vDir = normalize(position);
+          vec4 w = modelMatrix * vec4(position, 1.0);
+          vWorld = w.xyz;
+          gl_Position = projectionMatrix * viewMatrix * w;
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform vec3 uDirs[${CLASSICAL_PERIODS.length}]; uniform vec3 uCols[${CLASSICAL_PERIODS.length}];
+        uniform float uOpacity; uniform float uTime;
+        varying vec3 vDir; varying vec3 vWorld;
+        void main() {
+          vec3 c = vec3(0.0); float w = 0.0;
+          for (int i = 0; i < ${CLASSICAL_PERIODS.length}; i++) {
+            float k = exp((dot(vDir, uDirs[i]) - 1.0) * 4.5);
+            c += uCols[i] * k; w += k;
+          }
+          c /= w;
+          // soft cloudy banding so it reads as smoke, not a flat wall
+          float n = 0.65 + 0.35 * sin(vDir.x * 9.0 + uTime * 0.03) * sin(vDir.y * 7.0 - uTime * 0.02) * sin(vDir.z * 8.0);
+          vec3 view = normalize(vWorld - cameraPosition);
+          float rim = 0.55 + 0.45 * (1.0 - abs(dot(view, vDir)));
+          gl_FragColor = vec4(c, uOpacity * n * rim);
+        }`,
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      fog: false,
+    })
+    const m = new THREE.Mesh(new THREE.SphereGeometry(CLASSICAL_SHELL_RADIUS + CLASSICAL_SHELL_HALF * 0.6, 48, 32), this.glowMat)
+    m.renderOrder = -2
+    m.frustumCulled = false
+    return m
   }
 
   setQuality(q: 0 | 1 | 2): void {
-    this.drawCount = q === 2 ? PER_CHUNK : q === 1 ? 300 : 140
+    this.drawCount = q === 2 ? PER_CHUNK : q === 1 ? 600 : 420
     for (const c of this.chunks) c.points.geometry.setDrawRange(0, this.drawCount)
   }
 
@@ -185,18 +236,27 @@ export class ClassicalShell {
     this.uTime.value = t
     const surf = Math.abs(cam.length() - CLASSICAL_SHELL_RADIUS)
     this.proximity = smooth(FADE_FAR, FADE_NEAR, surf)
+    // Haze: faint from afar, swells a little on approach, gives way to particles inside the band.
+    const approach = smooth(1300, 300, surf)
+    const inside = smooth(CLASSICAL_SHELL_HALF * 1.6, CLASSICAL_SHELL_HALF * 0.4, surf)
+    this.glowMat.uniforms.uOpacity.value = (0.2 + 0.25 * approach) * (1 - 0.45 * inside)
     if (this.proximity <= 0.001) {
       if (this.group.visible) this.group.visible = false
       return
     }
     this.group.visible = true
-    const base = 0.9 * this.proximity
+    const base = 1.5 * this.proximity
     for (const c of this.chunks) {
       const d = cam.distanceTo(c.center)
       const vis = d < CHUNK_VIS_DIST
       c.points.visible = vis
       if (vis) c.mat.uniforms.uOpacity.value = base * smooth(CHUNK_VIS_DIST, CHUNK_VIS_DIST * 0.5, d)
     }
+  }
+
+  /** World point just inside the shell along a direction (for "fly to Classical"). */
+  entryPoint(dir: THREE.Vector3): THREE.Vector3 {
+    return dir.clone().normalize().multiplyScalar(CLASSICAL_SHELL_RADIUS - CLASSICAL_SHELL_HALF * 1.6)
   }
 
   /** Nearest period region (+ nearest subgenre name) when the camera is near the shell. */

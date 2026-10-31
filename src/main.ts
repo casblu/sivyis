@@ -5,6 +5,9 @@ import * as THREE from 'three'
 import {
   GENRES,
   CLASSICAL_GENRE,
+} from './artists.ts'
+import { CLASSICAL_PERIODS } from './classicalData.ts'
+import {
   GENRE_LABEL_RADIUS,
   HEARING_RADIUS,
   getArtistProfile,
@@ -134,6 +137,17 @@ ui.onEnergy = (artist, kind) => {
 galaxy.syncEnergy(wallet.receivedMap())
 wallet.subscribe(() => galaxy.syncEnergy(wallet.receivedMap()))
 ;(window as unknown as { __sivyis?: unknown }).__sivyis = { galaxy, fly, zap: (id: string) => galaxy.zapArtist(id), open: (id: string) => { const a = ARTISTS.find((x) => x.id === id); if (a) openArtist(a) } }
+
+ui.onClassical = (periodId) => {
+  if (!running) return
+  const p = periodId ? CLASSICAL_PERIODS.find((x) => x.id === periodId) : null
+  // Default: head outward the way the camera is looking (or straight out from where it is).
+  const dir = p ? new THREE.Vector3(...p.dir) : galaxy.camera.getWorldDirection(new THREE.Vector3())
+  if (!p && dir.dot(galaxy.camera.position) < 0 && galaxy.camera.position.lengthSq() > 1) dir.copy(galaxy.camera.position).normalize()
+  galaxy.setSelected(null)
+  fly.flyToArtist(galaxy.classicalShell.entryPoint(dir))
+  ui.fadeGestureHint()
+}
 
 ui.onFlyTo = (artist) => {
   if (!running) return

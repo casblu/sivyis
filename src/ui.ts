@@ -1,3 +1,4 @@
+import { CLASSICAL_PERIODS } from './classicalData.ts'
 import { isPublicDomain } from './classicalData.ts'
 import {
   ARTIST_PROFILES,
@@ -56,6 +57,8 @@ export class UI {
   root: HTMLElement
   onSelectTrack: ((artist: Artist, index: number) => void) | null = null
   onEnter: (() => void) | null = null
+  /** Fly out to the Classical outer shell (optionally a named period). */
+  onClassical: ((periodId: string | null) => void) | null = null
   onMute: ((muted: boolean) => void) | null = null
   onClosePanel: (() => void) | null = null
   onToggleMode: (() => void) | null = null
@@ -144,6 +147,8 @@ export class UI {
     ]
 
     must(root, '#enter').addEventListener('click', () => this.onEnter?.())
+    must(root, '#classical-btn').addEventListener('click', (e) => { e.stopPropagation(); this.onClassical?.(null) })
+    must(root, '#classical-btn').addEventListener('pointerdown', (e) => e.stopPropagation())
     this.muteBtn.addEventListener('click', () => {
       this.muted = !this.muted
       this.muteBtn.textContent = this.muted ? 'Sound off' : 'Sound on'
@@ -763,13 +768,18 @@ export class UI {
         a.genre.toLowerCase().includes(q) ||
         a.subgenre.toLowerCase().includes(q),
     ).slice(0, 8)
-    if (hits.length === 0) {
+    const periodHit = CLASSICAL_PERIODS.find((p) => p.name.toLowerCase().includes(q) && q.length >= 3)
+    const wantsClassical = q.length >= 3 && ('classical'.startsWith(q) || q.includes('classic') || !!periodHit || 'orchestra'.startsWith(q) || 'symphony'.startsWith(q))
+    const classicalBtn = wantsClassical
+      ? `<button type="button" class="search-hit search-classical" data-classical="${periodHit?.id ?? ''}"><b>✦ Classical sphere${periodHit ? ' · ' + escapeHtml(periodHit.name) : ''}</b><span>Fly out</span></button>`
+      : ''
+    if (hits.length === 0 && !classicalBtn) {
       this.searchResults.innerHTML = `<div class="search-empty">No artists match</div>`
       this.searchResults.classList.remove('hidden')
       this.clearSearchSelection()
       return
     }
-    this.searchResults.innerHTML = hits
+    this.searchResults.innerHTML = classicalBtn + hits
       .map(
         (a) =>
           `<button type="button" class="search-hit" data-id="${a.id}"><b>${escapeHtml(a.name)}</b><span>${escapeHtml(a.genre)}</span></button>`,
@@ -782,7 +792,15 @@ export class UI {
         this.selectSearchHit(artist)
       })
     })
-    this.selectSearchHit(hits[0])
+    this.searchResults.querySelector<HTMLButtonElement>('.search-classical')?.addEventListener('click', (e) => {
+      const id = (e.currentTarget as HTMLElement).dataset.classical || null
+      this.searchInput.value = ''
+      this.searchResults.classList.add('hidden')
+      this.clearSearchSelection()
+      this.searchInput.blur()
+      this.onClassical?.(id)
+    })
+    this.selectSearchHit(hits[0] ?? null)
   }
 
   private selectSearchHit(artist: Artist | null): void {
@@ -924,6 +942,7 @@ function layout(): string {
 
   <div id="hud-tools">
     <button id="wallet-btn" type="button" aria-label="Open Energy wallet">Wallet</button>
+    <button id="classical-btn" type="button" aria-label="Fly out to the Classical sphere">Classical</button>
     <button id="mode-toggle" type="button" aria-label="Enter fly exploration">Enter Fly</button>
     <button id="mute" type="button" aria-pressed="true">Sound on</button>
   </div>
