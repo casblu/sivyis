@@ -72,12 +72,35 @@ function colorAt(d: THREE.Vector3, out: THREE.Color): THREE.Color {
   return out.setRGB(r / w, g / w, b / w)
 }
 
+
+const PULSES = 6
+/** GLSL: rare soft glow pulses on the sphere (dir.xyz + start time; width rad + duration). */
+const PULSE_GLSL = /* glsl */ `
+  uniform vec4 uPulse[${PULSES}]; uniform vec2 uPulseB[${PULSES}];
+  float shellPulse(vec3 n, float time) {
+    float acc = 0.0;
+    for (int i = 0; i < ${PULSES}; i++) {
+      float age = (time - uPulse[i].w) / uPulseB[i].y;
+      if (age <= 0.0 || age >= 1.0) continue;
+      float env = sin(3.14159265 * age); env *= env;
+      float w = uPulseB[i].x;
+      float sp = exp((dot(n, uPulse[i].xyz) - 1.0) / (w * w * 0.5));
+      acc += env * sp;
+    }
+    return min(acc, 1.5);
+  }
+`
+
 type Chunk = { points: THREE.Points; center: THREE.Vector3; mat: THREE.ShaderMaterial }
 
 export class ClassicalShell {
   readonly group = new THREE.Group()
   private chunks: Chunk[] = []
   private uTime = { value: 0 }
+  private uPulse = { value: Array.from({ length: PULSES }, () => new THREE.Vector4(0, 1, 0, -100)) }
+  private uPulseB = { value: Array.from({ length: PULSES }, () => new THREE.Vector2(0.2, 3)) }
+  /** Next start time per pulse slot (CPU only schedules; GPU does all shading). */
+  private pulseNext = Array.from({ length: PULSES }, (_, i) => 0.8 + i * 1.7 + Math.random() * 2)
   private drawCount = PER_CHUNK
   private periodCenters = CLASSICAL_PERIODS.map((p) => new THREE.Vector3(...p.dir).multiplyScalar(CLASSICAL_SHELL_RADIUS))
   private subCenters = CLASSICAL_SUBS.map((s) => new THREE.Vector3(...s.dir).multiplyScalar(CLASSICAL_SHELL_RADIUS))
@@ -128,11 +151,12 @@ export class ClassicalShell {
       geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1))
       geo.computeBoundingSphere()
       const mat = new THREE.ShaderMaterial({
-        uniforms: { uTime: this.uTime, uOpacity: { value: 0 }, uMap: { value: tex }, uScale: { value: window.innerHeight * 0.5 } },
+        uniforms: { uTime: this.uTime, uPulse: this.uPulse, uPulseB: this.uPulseB, uRest: { value: 0.04 }, uOpacity: { value: 0 }, uMap: { value: tex }, uScale: { value: window.innerHeight * 0.5 } },
         vertexShader: /* glsl */ `
           attribute float aSize; attribute float aSeed; attribute vec3 color;
-          uniform float uTime; uniform float uScale;
+          uniform float uTime; uniform float uScale; uniform float uRest;
           varying vec3 vColor; varying float vFade; varying float vRot;
+          ${PULSE_GLSL}
           void main() {
             vec3 p = position;
             float t = uTime * 0.05 + aSeed;
@@ -141,7 +165,9 @@ export class ClassicalShell {
             float dist = -mv.z;
             gl_PointSize = clamp(aSize * uScale / max(dist, 1.0), 0.0, aSize > 30.0 ? 220.0 : 24.0);
             // Fade puffs that are right on the camera (fly-through) to avoid fill-rate spikes
-            vFade = smoothstep(4.0, 40.0, dist) * (aSize > 30.0 ? 0.7 : 1.0);
+            // Near-transparent at rest; rare pulses light the smoke in local period colors.
+            float pl = shellPulse(normalize(position), uTime);
+            vFade = smoothstep(4.0, 40.0, dist) * (aSize > 30.0 ? 0.7 : 1.0) * (uRest + pl * 1.1);
             vColor = color;
             vRot = aSeed + uTime * 0.02;
             gl_Position = projectionMatrix * mv;
@@ -185,7 +211,7 @@ export class ClassicalShell {
     const dirs = CLASSICAL_PERIODS.map((p) => new THREE.Vector3(...p.dir))
     const cols = CLASSICAL_PERIODS.map((p) => new THREE.Color(p.color))
     this.glowMat = new THREE.ShaderMaterial({
-      uniforms: { uDirs: { value: dirs }, uCols: { value: cols }, uOpacity: { value: 0.1 }, uTime: this.uTime },
+      uniforms: { uDirs: { value: dirs }, uCols: { value: cols }, uOpacity: { value: 0.006 }, uPulseGain: { value: 0.4 }, uTime: this.uTime, uPulse: this.uPulse, uPulseB: this.uPulseB },
       vertexShader: /* glsl */ `
         varying vec3 vDir; varying vec3 vWorld;
         void main() {
@@ -196,8 +222,9 @@ export class ClassicalShell {
         }`,
       fragmentShader: /* glsl */ `
         uniform vec3 uDirs[${CLASSICAL_PERIODS.length}]; uniform vec3 uCols[${CLASSICAL_PERIODS.length}];
-        uniform float uOpacity; uniform float uTime;
+        uniform float uOpacity; uniform float uTime; uniform float uPulseGain;
         varying vec3 vDir; varying vec3 vWorld;
+        ${PULSE_GLSL}
         void main() {
           vec3 c = vec3(0.0); float w = 0.0;
           for (int i = 0; i < ${CLASSICAL_PERIODS.length}; i++) {
@@ -209,7 +236,8 @@ export class ClassicalShell {
           float n = 0.65 + 0.35 * sin(vDir.x * 9.0 + uTime * 0.03) * sin(vDir.y * 7.0 - uTime * 0.02) * sin(vDir.z * 8.0);
           vec3 view = normalize(vWorld - cameraPosition);
           float rim = 0.55 + 0.45 * (1.0 - abs(dot(view, vDir)));
-          gl_FragColor = vec4(c, uOpacity * n * rim);
+          float pl = shellPulse(vDir, uTime);
+          gl_FragColor = vec4(c * (1.0 + pl * 0.6), (uOpacity + pl * uPulseGain) * n * rim);
         }`,
       side: THREE.BackSide,
       transparent: true,
@@ -239,18 +267,40 @@ export class ClassicalShell {
     // Haze: faint from afar, swells a little on approach, gives way to particles inside the band.
     const approach = smooth(1300, 300, surf)
     const inside = smooth(CLASSICAL_SHELL_HALF * 1.6, CLASSICAL_SHELL_HALF * 0.4, surf)
-    this.glowMat.uniforms.uOpacity.value = (0.2 + 0.25 * approach) * (1 - 0.45 * inside)
+    // Almost fully transparent at rest; a touch more inside the band so you can navigate.
+    this.glowMat.uniforms.uOpacity.value = 0.004 + 0.03 * inside
+    this.glowMat.uniforms.uPulseGain.value = 0.32 + 0.12 * approach
+    this.schedulePulses(t)
     if (this.proximity <= 0.001) {
       if (this.group.visible) this.group.visible = false
       return
     }
     this.group.visible = true
     const base = 1.5 * this.proximity
+    const rest = 0.03 + 0.22 * inside
+    for (const c of this.chunks) c.mat.uniforms.uRest.value = rest
     for (const c of this.chunks) {
       const d = cam.distanceTo(c.center)
       const vis = d < CHUNK_VIS_DIST
       c.points.visible = vis
       if (vis) c.mat.uniforms.uOpacity.value = base * smooth(CHUNK_VIS_DIST, CHUNK_VIS_DIST * 0.5, d)
+    }
+  }
+
+  private schedulePulses(t: number): void {
+    for (let i = 0; i < PULSES; i++) {
+      const p = this.uPulse.value[i]
+      const b = this.uPulseB.value[i]
+      const end = p.w + b.y
+      if (t < end || t < this.pulseNext[i]) continue
+      // Random point on the sphere, random size/length; then rest 2–9s before this slot fires again.
+      const z = Math.random() * 2 - 1
+      const a = Math.random() * Math.PI * 2
+      const rr = Math.sqrt(1 - z * z)
+      const dur = 2 + Math.random() * 2
+      p.set(Math.cos(a) * rr, z, Math.sin(a) * rr, t)
+      b.set(0.07 + Math.random() * 0.22, dur)
+      this.pulseNext[i] = t + dur + 2 + Math.random() * 7
     }
   }
 
