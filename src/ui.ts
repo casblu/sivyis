@@ -18,6 +18,7 @@ import { albumCoverImg, merchImg, merchKind, MERCH_LABEL } from './albumArt.ts'
 import { albumsFor, energyPhrase, ZAP_PRESETS } from './energy.ts'
 import { timeAgo, wallet, type WalletTx } from './wallet.ts'
 import { memorialYears } from './memorials.ts'
+import { mountSlideConfirm } from './slideConfirm.ts'
 import artistPhotos from './artistPhotos.json'
 
 type Photo = { file: string; artist: string; license: string; source: string }
@@ -546,9 +547,7 @@ export class UI {
         </label>
         <p class="send-hint" id="zap-preview">Send ${escapeHtml(energyPhrase(picked))}</p>
         <p class="demo-note">Nothing is sent until you confirm. This does not move real bitcoin.</p>
-        <div class="energy-actions">
-          <button type="button" id="zap-confirm" class="btc-send-btn">Send Energy</button>
-        </div>
+        <div class="energy-actions" id="zap-confirm"></div>
         <p class="send-status" id="zap-status" role="status"></p>
         <div class="send-recent">
           <p class="kicker">Your Energy to ${escapeHtml(artist.name)}</p>
@@ -572,22 +571,23 @@ export class UI {
           form.querySelectorAll('[data-sats]').forEach((b) => b.classList.remove('on'))
         }
       })
-      must(form, '#zap-confirm').addEventListener('click', () => {
+      mountSlideConfirm(must(form, '#zap-confirm'), () => {
         const result = wallet.zap(artist.baseId, artist.name, picked)
         const status = must(form, '#zap-status')
         if (!result.ok) {
-          status.textContent = result.error
-          status.classList.add('err')
+          // fresh slider so the user can fix the amount and retry
+          draw()
+          must(form, '#zap-status').textContent = result.error
+          must(form, '#zap-status').classList.add('err')
           return
         }
         status.classList.remove('err')
         status.textContent = `Sent ${energyPhrase(result.sats)}`
-        must(form, '#zap-confirm').setAttribute('disabled', 'true')
         this.refreshArtistWalletBits(artist)
         const recent = form.querySelector('#send-recent-list')
         if (recent) recent.innerHTML = this.txRows(wallet.txsToArtist(artist.baseId), false)
         this.onEnergy?.(artist, 'zap')
-      })
+      }, 'Slide to send', true)
     }
     draw()
   }
