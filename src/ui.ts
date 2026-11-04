@@ -722,7 +722,7 @@ export class UI {
   private renderProfile(): void {
     this.profileView.innerHTML = `
       <div class="profile-card">
-        <p class="kicker">SIVYIS Corp</p>
+        <p class="kicker">Cosmoly</p>
         <h1>Your profile</h1>
         <p class="bio">Explorer account for the Cosmoly music galaxy. Fly stars, study philosophy, and support artists with simulated Energy.</p>
         <div class="artist-wallet-card">
@@ -738,7 +738,7 @@ export class UI {
           <li><button type="button" data-goto="philosophy">Music Philosophy &amp; Theory</button></li>
           <li><button type="button" data-goto="history">Music History timeline</button></li>
         </ul>
-        <p class="demo-note">Official spelling: Cosmoly (C-o-s-m-o-l-y), a SIVYIS Corp product. All Energy transfers are simulated.</p>
+        <p class="demo-note">Official spelling: Cosmoly (C-o-s-m-o-l-y). All Energy transfers are simulated.</p>
       </div>
     `
     must(this.profileView, '#profile-open-wallet').addEventListener('click', () => this.openWallet())
@@ -930,7 +930,7 @@ function layout(): string {
   <div id="genre-overview"></div>
 
   <header id="brand">
-    <p class="kicker">A SIVYIS Corp product</p>
+    <p class="kicker">Cosmoly</p>
     <h1>Cosmoly</h1>
   </header>
 
@@ -1018,7 +1018,7 @@ function layout(): string {
 
   <div id="gate">
     <div class="gate-card">
-      <p class="kicker">A SIVYIS Corp product · Music galaxy</p>
+      <p class="kicker">Cosmoly · Music galaxy</p>
       <h1>Cosmoly</h1>
       <p>Fly through the stars to discover artists. Each star is selectable — open profiles for store, merch, related links, and simulated Energy. Study music philosophy in the tab below, and keep your Energy wallet ready.</p>
       <p class="demo-note">Sample stars play generated demo cues. Stars badged <b>RSS · V4V</b> or <b>Nostr</b> are real independent artists from the open Bitcoin music web, streamed from their own feeds and relays.</p>

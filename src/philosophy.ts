@@ -163,7 +163,7 @@ export const PHILOSOPHY_SECTIONS: PhilSection[] = [
   },
   {
     id: 'why-sivyis',
-    kicker: 'SIVYIS Corp',
+    kicker: 'Cosmoly',
     title: 'Why a galaxy for music?',
     html: `
       <p>Maps shape curiosity. A list sorts by chart position; a galaxy sorts by <strong>affinity and
@@ -194,13 +194,13 @@ export function philosophyPageHtml(): string {
 
   return `
     <div class="phil-hero">
-      <p class="kicker">SIVYIS Corp · Education</p>
+      <p class="kicker">Cosmoly · Education</p>
       <h1>Music Philosophy &amp; Theory</h1>
       ${PHILOSOPHY_INTRO}
     </div>
     <nav class="phil-toc" aria-label="Philosophy sections">${toc}<a href="#phil-web">Philosophy Web</a></nav>
     ${sections}
     ${philosophyWebSectionHtml()}
-    <p class="phil-foot">Educational overview · SIVYIS Corp · Not a substitute for formal study</p>
+    <p class="phil-foot">Educational overview · Cosmoly · Not a substitute for formal study</p>
   `
 }

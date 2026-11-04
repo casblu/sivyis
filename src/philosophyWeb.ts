@@ -708,7 +708,7 @@ export type PhilosophyWebHandle = {
 export function philosophyWebSectionHtml(): string {
   return `
   <section class="phil-section phil-web-block" id="phil-web">
-    <p class="kicker">SIVYIS Corp · Interactive</p>
+    <p class="kicker">Cosmoly · Interactive</p>
     <h2>Philosophy Web</h2>
     <p class="phil-lead" style="margin-bottom:18px">A living map of ideas about music: click nodes in the
       web or cosmos for deep reads; scrub eras to hear how thought and artists shift across time.
