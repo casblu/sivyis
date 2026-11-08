@@ -33,7 +33,14 @@ export function mountSlideConfirm(host: HTMLElement, onConfirm: () => void, labe
     if (once) return // single-use: caller replaces the slider with a receipt
     setTimeout(() => { done = false; track.classList.remove('confirmed'); set(0, true) }, 1400)
   }
+  const onMove = (e: PointerEvent) => { if (dragging) set(startOff + e.clientX - startX) }
+  const detach = () => {
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerup', release)
+    window.removeEventListener('pointercancel', release)
+  }
   const release = () => {
+    detach()
     if (!dragging) return
     dragging = false
     track.classList.remove('dragging')
@@ -44,13 +51,17 @@ export function mountSlideConfirm(host: HTMLElement, onConfirm: () => void, labe
     if (done) return
     dragging = true; startX = e.clientX; startOff = off
     track.classList.add('dragging')
-    thumb.setPointerCapture?.(e.pointerId)
+    // Capture keeps the drag on the thumb. Window listeners cover browsers
+    // where capture is refused, so the thumb still follows the pointer.
+    try { thumb.setPointerCapture(e.pointerId) } catch { /* ignore */ }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', release)
+    window.addEventListener('pointercancel', release)
     e.preventDefault()
   })
-  thumb.addEventListener('pointermove', (e) => { if (dragging) set(startOff + e.clientX - startX) })
+  thumb.addEventListener('pointermove', onMove)
   thumb.addEventListener('pointerup', release)
   thumb.addEventListener('pointercancel', release)
-  thumb.addEventListener('lostpointercapture', release)
   // keyboard: hold Enter/Space to fill, or arrows to step
   let holdTimer = 0
   track.addEventListener('keydown', (e) => {

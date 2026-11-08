@@ -1,5 +1,6 @@
 import { ARTISTS } from "./artists.ts"
 import { wallet } from './wallet.ts'
+import { playScreenZap, ZAP_FADE_MS, ZAP_HOLD_MS } from './screenZap.ts'
 import './style.css'
 import * as THREE from 'three'
 import {
@@ -89,16 +90,41 @@ ui.onClosePanel = () => {
   galaxy.setSelected(null)
   galaxy.setViewShift(0, 0)
 }
+/** Full-screen lightning + star strike. Same timing as the pre-Energy zap (6ff01a4 / aec4eca). */
+function playEnergyZap(artist: { id: string; name: string; color: number; position: [number, number, number] }): void {
+  const panel = document.getElementById('panel')
+  galaxy.setViewShift(0, 0)
+  tmpArtistPos.set(...artist.position)
+  fly.lookAtArtist(tmpArtistPos.clone())
+  panel?.classList.add('zapping')
+  // Profile fades back in (CSS opacity, ease-out cubic) as the lightning fades out.
+  window.setTimeout(() => {
+    panel?.classList.add('settling')
+    panel?.classList.remove('zapping')
+  }, ZAP_HOLD_MS)
+  window.setTimeout(() => {
+    panel?.classList.remove('settling')
+  }, ZAP_HOLD_MS + ZAP_FADE_MS + 100)
+  galaxy.zapArtist(artist.id)
+  playScreenZap({ color: artist.color, name: artist.name })
+}
+
+function noteEnergy(
+  artist: { id: string; name: string; color: number; position: [number, number, number] },
+  kind: 'play' | 'zap' | 'album',
+): void {
+  galaxy.pulseEnergy(artist.id, kind)
+  galaxy.syncEnergy(wallet.receivedMap())
+  if (kind === 'zap') playEnergyZap(artist)
+}
+
 const playerHost = app.querySelector<HTMLElement>('#player-host') ?? app
 const player = new MusicPlayer(playerHost, {
   onPlayCue: (artist, index) => {
     void audio.start()
     audio.playTrackCue(artist, index)
   },
-  onEnergy: (artist, kind) => {
-    galaxy.pulseEnergy(artist.id, kind)
-    galaxy.syncEnergy(wallet.receivedMap())
-  },
+  onEnergy: noteEnergy,
   onRealAudioStart: () => {
     void audio.start()
     audio.stopAll()
@@ -130,10 +156,7 @@ ui.onLookAt = (artist) => {
   ui.fadeGestureHint()
 }
 
-ui.onEnergy = (artist, kind) => {
-  galaxy.pulseEnergy(artist.id, kind)
-  galaxy.syncEnergy(wallet.receivedMap())
-}
+ui.onEnergy = noteEnergy
 galaxy.syncEnergy(wallet.receivedMap())
 wallet.subscribe(() => galaxy.syncEnergy(wallet.receivedMap()))
 ;(window as unknown as { __sivyis?: unknown }).__sivyis = { galaxy, fly, zap: (id: string) => galaxy.zapArtist(id), open: (id: string) => { const a = ARTISTS.find((x) => x.id === id); if (a) openArtist(a) } }

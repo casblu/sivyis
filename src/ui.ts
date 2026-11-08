@@ -547,7 +547,7 @@ export class UI {
         </label>
         <p class="send-hint" id="zap-preview">Send ${escapeHtml(energyPhrase(picked))}</p>
         <p class="demo-note">Nothing is sent until you confirm. This does not move real bitcoin.</p>
-        <div class="energy-actions" id="zap-confirm"></div>
+        <div class="zap-slide-host" id="zap-confirm"></div>
         <p class="send-status" id="zap-status" role="status"></p>
         <div class="send-recent">
           <p class="kicker">Your Energy to ${escapeHtml(artist.name)}</p>
@@ -563,12 +563,22 @@ export class UI {
         })
       })
       const custom = must(form, '#zap-custom') as HTMLInputElement
+      const slideLabel = () => `Slide to send ${energyPhrase(picked)}`
+      const paintSlideLabel = () => {
+        const label = form.querySelector('.slide-label')
+        if (label) label.textContent = `${slideLabel()} →`
+        form.querySelector('.slide-confirm')?.setAttribute(
+          'aria-label',
+          `${slideLabel()}. Hold Enter or press Right Arrow repeatedly to confirm`,
+        )
+      }
       custom.addEventListener('input', () => {
         const n = Math.round(Number(custom.value))
         if (n >= 1) {
           picked = n
           must(form, '#zap-preview').textContent = `Send ${energyPhrase(n)}`
           form.querySelectorAll('[data-sats]').forEach((b) => b.classList.remove('on'))
+          paintSlideLabel()
         }
       })
       mountSlideConfirm(must(form, '#zap-confirm'), () => {
@@ -582,12 +592,18 @@ export class UI {
           return
         }
         status.classList.remove('err')
-        status.textContent = `Sent ${energyPhrase(result.sats)}`
+        status.textContent = ''
+        // Single-use slider → receipt. Close and reopen to send again.
+        must(form, '#zap-confirm').innerHTML = `
+          <div class="send-receipt" role="status">
+            <span class="receipt-bolt">⚡</span>
+            <div><strong>${escapeHtml(energyPhrase(result.sats))}</strong><small>sent to ${escapeHtml(artist.name)} (demo)</small></div>
+          </div>`
         this.refreshArtistWalletBits(artist)
         const recent = form.querySelector('#send-recent-list')
         if (recent) recent.innerHTML = this.txRows(wallet.txsToArtist(artist.baseId), false)
         this.onEnergy?.(artist, 'zap')
-      }, 'Slide to send', true)
+      }, slideLabel(), true)
     }
     draw()
   }

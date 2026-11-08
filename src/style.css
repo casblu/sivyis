@@ -1679,7 +1679,8 @@ kbd {
 .pay-list { list-style: none; padding: 0; margin: 4px 0 8px; font-size: 12px; }
 .pay-target { font-size: 12px; margin: 2px 0 8px; }
 .memorial-line { margin: 2px 0 8px; font-size: 13px; letter-spacing: .04em; color: #ffe7b0; text-shadow: 0 0 10px rgba(255,215,140,.6); }
-.slide-confirm{position:relative;height:56px;border-radius:999px;margin-top:10px;background:rgba(247,147,26,.12);border:1px solid color-mix(in srgb,var(--btc) 50%,var(--line));overflow:hidden;user-select:none;touch-action:none;outline:none}
+.slide-confirm{position:relative;display:block;width:100%;box-sizing:border-box;flex:1 0 100%;height:56px;border-radius:999px;margin-top:10px;background:rgba(247,147,26,.12);border:1px solid color-mix(in srgb,var(--btc) 50%,var(--line));overflow:hidden;user-select:none;touch-action:none;outline:none}
+.zap-slide-host{display:block;width:100%}
 .slide-confirm:focus-visible{box-shadow:0 0 0 2px #9fd8ff}
 .slide-fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,rgba(120,180,255,.15),rgba(160,215,255,.55));box-shadow:0 0 18px rgba(140,200,255,.6)}
 .slide-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ffc978;font:600 .8rem 'Exo 2',sans-serif;letter-spacing:.08em;text-transform:uppercase;opacity:calc(1 - var(--p,0)*1.4);pointer-events:none}

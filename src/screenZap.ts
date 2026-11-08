@@ -42,8 +42,13 @@ export function playScreenZap(opts: { color?: number; name?: string } = {}): voi
   const cv = document.createElement('canvas')
   cv.className = 'screen-zap'
   cv.setAttribute('aria-hidden', 'true')
+  cv.style.zIndex = '100000'
   document.body.appendChild(cv)
-  const ctx = cv.getContext('2d', { alpha: true, desynchronized: true } as CanvasRenderingContext2DSettings)!
+  // Prefer a normal 2D context. `desynchronized: true` can return null or a
+  // context that never composites, which made the full-screen bolts invisible.
+  const ctx = cv.getContext('2d', { alpha: true })
+    ?? cv.getContext('2d', { alpha: true, desynchronized: true } as CanvasRenderingContext2DSettings)
+  if (!ctx) { cv.remove(); return }
   // Sized ONCE (DPR capped at 1.5); fade-out is pure CSS opacity on the compositor.
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
   const W = window.innerWidth, H = window.innerHeight

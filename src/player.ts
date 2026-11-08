@@ -1,6 +1,7 @@
 import type { Artist, Track } from './artists.ts'
 import { albumCoverImg, albumCoverUrl, placeholderCover } from './albumArt.ts'
 import { albumForTrack, energyPhrase, ZAP_PRESETS } from './energy.ts'
+import { mountSlideConfirm } from './slideConfirm.ts'
 import { wallet } from './wallet.ts'
 import { isPublicDomain } from './classicalData.ts'
 import artistPhotos from './artistPhotos.json'
@@ -451,9 +452,9 @@ export class MusicPlayer {
         </label>
         <p class="send-hint" id="zap-preview">Send ${escapeHtml(energyPhrase(picked))}</p>
         <p class="demo-note">Simulated. No real bitcoin moves until you confirm.</p>
+        <div class="zap-slide-host" id="zap-confirm"></div>
         <div class="energy-actions">
           <button type="button" id="zap-cancel" class="player-chip">Cancel</button>
-          <button type="button" id="zap-confirm" class="btc-send-btn">Send Energy</button>
         </div>
         <p class="send-status" id="zap-status" role="status"></p>`
       pop.querySelectorAll<HTMLButtonElement>('[data-sats]').forEach((btn) => {
@@ -465,28 +466,43 @@ export class MusicPlayer {
         })
       })
       const custom = must(pop, '#zap-custom') as HTMLInputElement
+      const slideLabel = () => `Slide to send ${energyPhrase(picked)}`
+      const paintSlideLabel = () => {
+        const label = pop.querySelector('.slide-label')
+        if (label) label.textContent = `${slideLabel()} →`
+        pop.querySelector('.slide-confirm')?.setAttribute(
+          'aria-label',
+          `${slideLabel()}. Hold Enter or press Right Arrow repeatedly to confirm`,
+        )
+      }
       custom.addEventListener('input', () => {
         const n = Math.round(Number(custom.value))
         if (n >= 1) {
           picked = n
           must(pop, '#zap-preview').textContent = `Send ${energyPhrase(n)}`
           pop.querySelectorAll('[data-sats]').forEach((b) => b.classList.remove('on'))
+          paintSlideLabel()
         }
       })
       must(pop, '#zap-cancel').addEventListener('click', () => this.closePop())
-      must(pop, '#zap-confirm').addEventListener('click', () => {
+      mountSlideConfirm(must(pop, '#zap-confirm'), () => {
         const result = wallet.zap(artist.baseId, artist.name, picked)
         const status = must(pop, '#zap-status')
         if (!result.ok) {
-          status.textContent = result.error
-          status.classList.add('err')
+          draw()
+          must(pop, '#zap-status').textContent = result.error
+          must(pop, '#zap-status').classList.add('err')
           return
         }
-        this.handlers.onEnergy?.(artist, 'zap')
         status.classList.remove('err')
-        status.textContent = `Sent ${energyPhrase(result.sats)}`
-        must(pop, '#zap-confirm').setAttribute('disabled', 'true')
-      })
+        status.textContent = ''
+        must(pop, '#zap-confirm').innerHTML = `
+          <div class="send-receipt" role="status">
+            <span class="receipt-bolt">⚡</span>
+            <div><strong>${escapeHtml(energyPhrase(result.sats))}</strong><small>sent to ${escapeHtml(artist.name)} (demo)</small></div>
+          </div>`
+        this.handlers.onEnergy?.(artist, 'zap')
+      }, slideLabel(), true)
     }
     draw()
   }
