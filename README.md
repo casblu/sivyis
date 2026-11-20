@@ -96,5 +96,5 @@ These are labeled **demo cues**, not commercial recordings. There is **no copyri
 
 ## Visuals / nebulae
 
-Genre regions use NASA/ESA public-domain nebula photography (`public/nebulae/`, see `CREDITS.txt`).
+Genre regions are photographic nebula plates (`public/nebulae/`, see `CREDITS.txt`): JWST Ring, Hubble Butterfly, Horsehead, Hourglass, Mystic Mountain, Pillars of Creation, Crab, Helix, and Orion, plus a procedural stellar jet. Credit: NASA, ESA, CSA, STScI.
 Renderer pixel ratio scales with quality tier (HD up to `devicePixelRatio` capped at 3); bloom runs at full canvas resolution.
