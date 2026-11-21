@@ -1,5 +1,5 @@
 /**
- * Each genre nebula is a 3D cloud of soft points, not a camera-facing card.
+ * Each genre nebula is a 3D cloud of large, soft smoke sprites, not sparkly points.
  * The shape is the morphology (ring, wings, hourglass, pillars, jet, …).
  * Colors start from that nebula's palette and are then tinted from its NASA plate
  * so the front view keeps the photographic identity.
@@ -37,53 +37,104 @@ export function volumeKindFor(id: string): VolumeKind {
   return KIND[id as Exclude<GenreId, 'classical'>] ?? 'orion'
 }
 
-export const NEBULA_VOLUME_COUNT = 4200
+/** Few large puffs. They overlap into continuous smoke; a phone tier draws fewer of them. */
+export const NEBULA_VOLUME_COUNT = 220
 
-export const NEBULA_VOL_VERT = `
-attribute float aSize;
+const NEBULA_VOL_VERT = `
+attribute vec2 corner;
+attribute vec2 aSize;
 attribute vec3 aDrift;
 attribute float aPhase;
 attribute vec3 color;
 uniform float uTime;
-uniform float uScale;
 varying vec3 vColor;
 varying float vFade;
+varying vec2 vUv;
 void main() {
   vColor = color;
-  float t = uTime * 0.11 + aPhase;
-  vec3 p = position * (1.0 + 0.028 * sin(uTime * 0.2 + aPhase));
+  float t = uTime * 0.07 + aPhase;
+  vec3 p = position;
   p += aDrift * sin(t);
-  p.x += aDrift.z * sin(t * 0.71 + position.y * 0.085);
-  p.y += aDrift.x * cos(t * 0.63 + position.z * 0.085) * 0.7;
-  p.z += aDrift.y * cos(t * 0.57 + position.x * 0.085);
+  p.x += aDrift.z * sin(t * 0.62 + position.y * 0.04);
+  p.z += aDrift.y * cos(t * 0.54 + position.x * 0.04);
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
-  gl_PointSize = clamp(aSize * uScale / max(1.0, -mv.z), 1.0, 30.0);
-  vFade = smoothstep(1.1, 8.5, -mv.z);
+  float ang = aPhase + uTime * 0.035;
+  float c = cos(ang), s = sin(ang);
+  vec2 q = corner * aSize;
+  q = vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+  mv.xy += q;
+  vUv = corner + 0.5;
+  vFade = smoothstep(1.4, 9.0, -mv.z);
   gl_Position = projectionMatrix * mv;
 }
 `
 
-export const NEBULA_VOL_FRAG = `
+const NEBULA_VOL_FRAG = `
+uniform sampler2D uSmoke;
 uniform float uOpacity;
 varying vec3 vColor;
 varying float vFade;
+varying vec2 vUv;
 void main() {
-  vec2 q = gl_PointCoord - vec2(0.5);
-  float d = dot(q, q);
-  if (d > 0.25) discard;
-  float soft = smoothstep(0.25, 0.02, d);
-  soft *= soft;
-  float a = soft * uOpacity * vFade;
-  gl_FragColor = vec4(vColor * 0.4, a);
+  float smoke = texture2D(uSmoke, vUv).a;
+  float a = smoke * uOpacity * vFade;
+  if (a < 0.004) discard;
+  gl_FragColor = vec4(vColor, a);
 }
 `
 
+function smokeTexture(): THREE.CanvasTexture {
+  const size = 256
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const g = canvas.getContext('2d')!
+  const img = g.createImageData(size, size)
+  const hash = (ix: number, iy: number) => {
+    const n = Math.sin(ix * 127.1 + iy * 311.7) * 43758.5453
+    return n - Math.floor(n)
+  }
+  const noise = (x: number, y: number) => {
+    const xi = Math.floor(x), yi = Math.floor(y)
+    const xf = x - xi, yf = y - yi
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf)
+    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1)
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+  }
+  const fbm = (x: number, y: number) => noise(x, y) * 0.65 + noise(x * 2.1 + 4.0, y * 2.1) * 0.35
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = (x + 0.5) / size - 0.5
+      const dy = (y + 0.5) / size - 0.5
+      const r = Math.hypot(dx, dy) / 0.5
+      const n = fbm(dx * 2.2 + 1.7, dy * 2.2 + 0.6)
+      let a = Math.exp(-r * r * 1.05)
+      a *= 0.88 + 0.12 * n
+      if (r > 0.72) a *= Math.max(0, 1 - (r - 0.72) / 0.42)
+      const i = (y * size + x) * 4
+      const v = Math.max(0, Math.min(255, Math.round(a * 255)))
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = 255
+      img.data[i + 3] = v
+    }
+  }
+  g.putImageData(img, 0, 0)
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.NoColorSpace
+  tex.magFilter = THREE.LinearFilter
+  tex.minFilter = THREE.LinearMipmapLinearFilter
+  tex.generateMipmaps = true
+  tex.needsUpdate = true
+  return tex
+}
+
+let SMOKE: THREE.CanvasTexture | null = null
+
 export function createVolumeMaterial(): THREE.ShaderMaterial {
+  SMOKE ??= smokeTexture()
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
-      uOpacity: { value: 0.58 },
-      uScale: { value: 450 },
+      uOpacity: { value: 0.12 },
+      uSmoke: { value: SMOKE },
     },
     vertexShader: NEBULA_VOL_VERT,
     fragmentShader: NEBULA_VOL_FRAG,
@@ -91,8 +142,69 @@ export function createVolumeMaterial(): THREE.ShaderMaterial {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   })
-  mat.userData.baseOpacity = 0.58
+  mat.userData.baseOpacity = 0.12
   return mat
+}
+
+/** Camera-facing quads, one per puff. Colors live in `vol.color` and are copied onto the mesh. */
+export function createSmokeMesh(vol: VolumeBuffers): THREE.Mesh {
+  const n = vol.position.length / 3
+  const pos = new Float32Array(n * 12)
+  const corner = new Float32Array(n * 8)
+  const size = new Float32Array(n * 8)
+  const drift = new Float32Array(n * 12)
+  const phase = new Float32Array(n * 4)
+  const color = new Float32Array(n * 12)
+  const index: number[] = []
+  const corners = [-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5]
+  for (let i = 0; i < n; i++) {
+    const sx = vol.size[i]
+    const sy = sx * (0.82 + (vol.phase[i] % 1) * 0.36)
+    for (let v = 0; v < 4; v++) {
+      const k = i * 4 + v
+      pos[k * 3] = vol.position[i * 3]
+      pos[k * 3 + 1] = vol.position[i * 3 + 1]
+      pos[k * 3 + 2] = vol.position[i * 3 + 2]
+      corner[k * 2] = corners[v * 2]
+      corner[k * 2 + 1] = corners[v * 2 + 1]
+      size[k * 2] = sx
+      size[k * 2 + 1] = sy
+      drift[k * 3] = vol.drift[i * 3]
+      drift[k * 3 + 1] = vol.drift[i * 3 + 1]
+      drift[k * 3 + 2] = vol.drift[i * 3 + 2]
+      phase[k] = vol.phase[i]
+      color[k * 3] = vol.color[i * 3]
+      color[k * 3 + 1] = vol.color[i * 3 + 1]
+      color[k * 3 + 2] = vol.color[i * 3 + 2]
+    }
+    const o = i * 4
+    index.push(o, o + 1, o + 2, o, o + 2, o + 3)
+  }
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  geo.setAttribute('corner', new THREE.BufferAttribute(corner, 2))
+  geo.setAttribute('aSize', new THREE.BufferAttribute(size, 2))
+  geo.setAttribute('aDrift', new THREE.BufferAttribute(drift, 3))
+  geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1))
+  geo.setAttribute('color', new THREE.BufferAttribute(color, 3))
+  geo.setIndex(index)
+  const mesh = new THREE.Mesh(geo, createVolumeMaterial())
+  mesh.frustumCulled = false
+  mesh.userData.puffCount = n
+  return mesh
+}
+
+/** Copy tinted puff colors onto the four corners of each sprite. */
+export function syncSmokeColors(mesh: THREE.Mesh, color: Float32Array): void {
+  const attr = mesh.geometry.getAttribute('color') as THREE.BufferAttribute
+  const n = color.length / 3
+  for (let i = 0; i < n; i++) {
+    for (let v = 0; v < 4; v++) {
+      const k = i * 4 + v
+      attr.setXYZ(k, color[i * 3], color[i * 3 + 1], color[i * 3 + 2])
+    }
+  }
+  attr.needsUpdate = true
 }
 
 export type VolumeBuffers = {
@@ -156,8 +268,7 @@ export function buildNebulaVolume(kind: VolumeKind, count: number, span: number,
   }
 
   for (let i = 0; i < count; i++) {
-    const fine = rand() < 0.9
-    const sz = span * (fine ? 0.032 + rand() * 0.02 : 0.062 + rand() * 0.02)
+    const sz = span * (0.15 + rand() * 0.11)
     let x = 0, y = 0, z = 0
     let col: RGB = A
 
