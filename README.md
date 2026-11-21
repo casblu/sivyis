@@ -96,5 +96,5 @@ These are labeled **demo cues**, not commercial recordings. There is **no copyri
 
 ## Visuals / nebulae
 
-Genre regions are volumetric mist clouds (`public/nebulae/`, see `CREDITS.txt`) shaped like the JWST Ring, Hubble Butterfly, Horsehead, Hourglass, Mystic Mountain, Pillars of Creation, Crab, Helix, and Orion, plus a red curtain with a cyan jet. Colors are tinted from those public-domain plates. Credit: NASA, ESA, CSA, STScI.
+Genre regions are smooth 3D smoke (`public/nebulae/`, see `CREDITS.txt`) shaped like the JWST Ring, Hubble Butterfly, Horsehead, Hourglass, Mystic Mountain, Pillars of Creation, Crab, Helix, and Orion, plus a red curtain with a cyan jet. Colors are tinted from those public-domain plates. Credit: NASA, ESA, CSA, STScI.
 Renderer pixel ratio scales with quality tier (HD up to `devicePixelRatio` capped at 3); bloom runs at full canvas resolution.

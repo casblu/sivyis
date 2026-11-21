@@ -25,7 +25,8 @@ import { buildSkeleton } from './nebulaShape.ts'
 import {
   NEBULA_VOLUME_COUNT,
   buildNebulaVolume,
-  createVolumeMaterial,
+  createSmokeMesh,
+  syncSmokeColors,
   tintVolumeFromImage,
   volumeKindFor,
 } from './nebulaVolume.ts'
@@ -127,7 +128,7 @@ export type NebulaHandle = {
   skelR: number[]
   /** Signed distance (world units) from camera to cloud surface, updated per frame. */
   surfDist: number
-  particles: THREE.Points
+  particles: THREE.Mesh
   /** Base particle opacity at current quality (before distance fade). */
   particleBaseOpacity: number
   /** Base particle size at current quality (before distance fade). */
@@ -315,8 +316,6 @@ export function photoNebulaTexture(img: HTMLImageElement, tintHex: number, seed 
   tex.needsUpdate = true
   return tex
 }
-
-const volumeDrawBuf = new THREE.Vector2()
 
 export class GalaxyScene {
   renderer: THREE.WebGLRenderer
@@ -715,8 +714,6 @@ export class GalaxyScene {
       if (vol.uniforms?.uOpacity) {
         vol.uniforms.uTime.value = t
         vol.uniforms.uOpacity.value = neb.particleBaseOpacity * smokeMul
-        this.renderer.getDrawingBufferSize(volumeDrawBuf)
-        vol.uniforms.uScale.value = volumeDrawBuf.y * 0.5
       }
     }
 
@@ -882,10 +879,10 @@ export class GalaxyScene {
     this.syncResolution()
     // Phone tier draws a sparser cloud. The form stays; the fill drops.
     for (const neb of this.nebulaHandles) {
-      const total = neb.particles.geometry.getAttribute('position').count
-      const keep = q === 2 ? total : q === 1 ? Math.ceil(total * 0.55) : Math.ceil(total * 0.32)
-      neb.particles.geometry.setDrawRange(0, keep)
-      neb.particleBaseOpacity = (q === 2 ? 0.58 : q === 1 ? 0.48 : 0.38)
+      const total = (neb.particles.userData.puffCount as number) || 1
+      const keep = q === 2 ? total : q === 1 ? Math.ceil(total * 0.6) : Math.ceil(total * 0.4)
+      neb.particles.geometry.setDrawRange(0, keep * 6)
+      neb.particleBaseOpacity = (q === 2 ? 0.12 : q === 1 ? 0.1 : 0.08)
       const vol = neb.particles.material as THREE.ShaderMaterial
       if (vol.uniforms?.uOpacity) vol.uniforms.uOpacity.value = neb.particleBaseOpacity
     }
@@ -1040,16 +1037,8 @@ export class GalaxyScene {
       const anchors = SUBGENRES.filter((s) => s.parentId === genre.id).map((s) => new THREE.Vector3(...s.center).sub(center))
       const skel = buildSkeleton(gi * 7919 + 31, genre.radius, anchors)
       const vol = buildNebulaVolume(volumeKindFor(genre.id), NEBULA_VOLUME_COUNT, photo.span, gi * 131 + 7, photo.mist)
-      const geo = new THREE.BufferGeometry()
-      geo.setAttribute('position', new THREE.BufferAttribute(vol.position, 3))
-      geo.setAttribute('color', new THREE.BufferAttribute(vol.color, 3))
-      geo.setAttribute('aSize', new THREE.BufferAttribute(vol.size, 1))
-      geo.setAttribute('aDrift', new THREE.BufferAttribute(vol.drift, 3))
-      geo.setAttribute('aPhase', new THREE.BufferAttribute(vol.phase, 1))
-      geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), photo.span)
-      const mat = createVolumeMaterial()
-      const points = new THREE.Points(geo, mat)
-      points.frustumCulled = false
+      const points = createSmokeMesh(vol)
+      points.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), photo.span)
       group.add(points)
       this.scene.add(group)
       const handle: NebulaHandle = {
@@ -1061,7 +1050,7 @@ export class GalaxyScene {
         skelR: skel.map((sp) => sp.r * 1.15),
         surfDist: Infinity,
         particles: points,
-        particleBaseOpacity: mat.userData.baseOpacity as number,
+        particleBaseOpacity: (points.material as THREE.ShaderMaterial).userData.baseOpacity as number,
         particleBaseSize: 1,
       }
       this.nebulaHandles.push(handle)
@@ -1069,7 +1058,7 @@ export class GalaxyScene {
       void loadImage(photo.src)
         .then((img) => {
           tintVolumeFromImage(vol.color, vol.position, photo.span, img)
-          ;(geo.getAttribute('color') as THREE.BufferAttribute).needsUpdate = true
+          syncSmokeColors(points, vol.color)
         })
         .catch(() => {
           /* palette colors already match the nebula */
