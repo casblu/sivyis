@@ -1,44 +1,17 @@
-Cosmoly genre nebula plates — NASA / ESA / CSA / STScI public domain,
-except the stellar-jet plate, which is generated in this repository.
-
-NASA and ESA Hubble / Webb media are not copyrighted (public domain) unless noted.
-Resized to a max edge of about 1280px for phones. Do not substitute watermarked reposts.
+Cosmoly genre nebula textures — NASA / ESA / Hubble / JWST public domain
+All images obtained via images.nasa.gov (NASA Image and Video Library).
+NASA media is generally not copyrighted (public domain) unless noted.
 
 Genre mapping:
-  electronic  ring.jpg       ESA/Webb weic2320b     Ring Nebula, JWST NIRCam
-                             Credit: ESA/Webb, NASA, CSA, M. Barlow, N. Cox, R. Wesson
-                             https://esawebb.org/images/weic2320b/
+  hiphop      -> bubble.jpg     NASA GSFC_20171208_Archive_e002039  Hubble Bubbles And Baby Stars
+  pop         -> lagoon.jpg     NASA GSFC_20171208_Archive_e001955  Hubble Lagoon Nebula
+  rock        -> orion.jpg      NASA PIA01322                       Chaos at the Heart of Orion
+  rnb         -> trifid.jpg     NASA PIA17834                       Trifid Nebula (Spitzer/Hubble)
+  electronic  -> helix.jpg      NASA PIA18164                       Helix Nebula
+  jazz        -> crab.jpg       NASA PIA03606                       Crab Nebula
+  latin       -> horsehead.jpg  NASA PIA16008                       Horsehead Nebula (Hubble)
+  country     -> carina.jpg     NASA GSFC_20171208_Archive_e002076  Carina Nebula landscape
+  indie       -> mystic.jpg     NASA PIA15985                       Carina "Mystic Mountain"
+  metal       -> pillars.jpg    NASA GSFC_20171208_Archive_e000842  Pillars of Creation (Hubble)
 
-  pop         butterfly.jpg  ESA/Hubble heic0910h   Butterfly Nebula (NGC 6302)
-                             Credit: NASA, ESA, and the Hubble SM4 ERO Team
-                             https://esahubble.org/images/heic0910h/
-
-  metal       horsehead.jpg  ESA/Hubble heic0105a   Horsehead Nebula (Barnard 33)
-                             Credit: NASA, ESA, and the Hubble Heritage Team (STScI/AURA)
-                             https://esahubble.org/images/heic0105a/
-                             Recolored here toward H-alpha crimson with a blue reflection glow.
-                             The silhouette and filaments are the Hubble frame.
-
-  latin       hourglass.jpg  ESA/Hubble opo9607a    Hourglass Nebula (MyCn 18)
-                             Credit: R. Sahai and J. Trauger (JPL), WFPC2 Science Team, NASA/ESA
-                             https://esahubble.org/images/opo9607a/
-
-  rock        jet.jpg        procedural             Red emission curtain and a translucent cyan jet,
-                             in the manner of Hubble Herbig–Haro jets. Not a photograph.
-
-  country     mystic.jpg     ESA/Hubble heic1007a   Carina "Mystic Mountain"
-                             Credit: NASA, ESA, M. Livio and the Hubble 20th Anniversary Team (STScI)
-                             https://esahubble.org/images/heic1007a/
-
-  jazz        pillars.jpg    ESA/Hubble heic1501a   Pillars of Creation (Eagle Nebula)
-                             Credit: NASA, ESA, and the Hubble Heritage Team (STScI/AURA)
-                             https://esahubble.org/images/heic1501a/
-
-  hiphop      crab.jpg       NASA PIA03606          Crab Nebula
-                             Credit: NASA, ESA, J. Hester and A. Loll (Arizona State University)
-
-  indie       helix.jpg      NASA PIA18164          Helix Nebula
-                             Credit: NASA, ESA, C.R. O'Dell (Vanderbilt), M. Meixner and P. McCullough (STScI)
-
-  rnb         orion.jpg      NASA PIA01322          Orion Nebula
-                             Credit: NASA, ESA, M. Robberto (STScI/ESA) and the Hubble Space Telescope Orion Treasury Project Team
+Resized to max ~2048px edge for GPU friendliness. Credit: NASA/ESA.

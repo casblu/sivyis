@@ -1038,7 +1038,6 @@ function layout(): string {
       <h1>Cosmoly</h1>
       <p>Fly through the stars to discover artists. Each star is selectable — open profiles for store, merch, related links, and simulated Energy. Study music philosophy in the tab below, and keep your Energy wallet ready.</p>
       <p class="demo-note">Sample stars play generated demo cues. Stars badged <b>RSS · V4V</b> or <b>Nostr</b> are real independent artists from the open Bitcoin music web, streamed from their own feeds and relays.</p>
-      <p class="hero-credit">Nebula photographs: NASA, ESA, CSA, STScI. The stellar-jet plate is procedural.</p>
       <button id="enter" type="button">Enter the galaxy</button>
       <ul class="gate-keys">
         <li><strong>Galaxy:</strong> fly freely · tap stars for profiles</li>
