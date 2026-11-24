@@ -1706,7 +1706,6 @@ kbd {
 .hero-text .kicker { margin: 0 0 2px; text-shadow: 0 1px 6px #000; }
 #panel .hero-text h2 { font-size: 2.3rem; line-height: 1.05; margin: 0; padding: 0; text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
 .hero-credit { display: block; font-size: 0.62rem; opacity: 0.5; color: inherit; text-decoration: none; margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gate-card .hero-credit { white-space: normal; overflow: visible; text-overflow: unset; }
 .hero-credit:hover { opacity: 0.85; text-decoration: underline; }
 .hero-gallery { display: flex; gap: 8px; margin: 0 0 14px; overflow-x: auto; }
 .hero-thumb { flex: 0 0 auto; width: 58px; height: 58px; padding: 0; border-radius: 10px; overflow: hidden; border: 2px solid transparent; background: #111; cursor: pointer; }
