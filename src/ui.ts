@@ -246,6 +246,7 @@ export class UI {
     document.body.classList.remove('mode-overview')
     this.genreOverview.classList.add('hidden')
     this.modeBtn.classList.add('hidden')
+    must(this.root, '#classical-btn').classList.add('hidden')
     if (sessionStorage.getItem('sivyis-gesture-hint') !== '1') {
       this.gestureHint.classList.remove('hidden')
       window.setTimeout(() => this.fadeGestureHint(), 11000)
@@ -286,6 +287,7 @@ export class UI {
     document.body.classList.toggle('mode-overview', false)
     document.body.classList.toggle('mode-fly', true)
     this.modeBtn.classList.add('hidden')
+    must(this.root, '#classical-btn').classList.add('hidden')
     this.genreOverview.classList.add('hidden')
     this.modeBtn.textContent = 'Fly'
     this.modeBtn.setAttribute('aria-label', 'Fly mode')
@@ -957,7 +959,7 @@ function layout(): string {
   </aside>
 
   <div id="hud-tools">
-    <button id="wallet-btn" type="button" aria-label="Open Energy wallet">Wallet</button>
+    <button id="wallet-btn" type="button" hidden aria-hidden="true" tabindex="-1" aria-label="Open Energy wallet">Wallet</button>
     <button id="classical-btn" type="button" aria-label="Fly out to the Classical sphere">Classical</button>
     <button id="mode-toggle" type="button" aria-label="Enter fly exploration">Enter Fly</button>
     <button id="mute" type="button" aria-pressed="true">Sound on</button>

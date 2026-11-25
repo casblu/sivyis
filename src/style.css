@@ -158,6 +158,14 @@ html, body, #app {
   color: var(--accent);
 }
 
+/* Wallet is off the HUD on the entry screen and in-galaxy. The Profile tab
+   and artist-profile Wallet button still open the drawer. */
+#wallet-btn { display: none; }
+/* .hidden on these HUD buttons had no rule, so Fly stayed visible after enter.
+   Hide Classical and Fly only after the gate is dismissed (entered / mode-fly). */
+#classical-btn.hidden,
+#mode-toggle.hidden { display: none; }
+
 #search-box {
   position: fixed;
   top: calc(12px + var(--safe-top));
